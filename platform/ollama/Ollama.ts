@@ -1,8 +1,13 @@
 import { fetchEnvVar } from "@platform/utils";
 import {
+  CreateModelOptions,
+  OllamaBasicResponse,
   OllamaClient,
+  OllamaGenerateOptions,
   OllamaGenerateResponse,
-  OllamaModelListResponse,
+  OllamaResponse,
+  OllamaTagResponse,
+  PullModelOptions,
 } from "./types/Ollama";
 
 /**
@@ -19,11 +24,11 @@ import {
 export default class Ollama implements OllamaClient {
   /**
    * The base URL for the Ollama API.
-   * Fetched from the OLLAMA_API environment variable, defaults to "http://ollama:11434/api".
+   * Fetched from the OLLAMA_API environment variable, defaults to "http://otm-home-ollama:11434/api".
    */
   static ollamaApi: string = fetchEnvVar(
     "OLLAMA_API",
-    "http://ollama:11434/api"
+    "http://otm-home-ollama:11434/api",
   );
 
   /**
@@ -61,16 +66,12 @@ export default class Ollama implements OllamaClient {
    * const ollama = await Ollama.create();
    * ```
    */
-  static async create(model?: string): Promise<Ollama> {
-    if (
-      !model ||
-      !(await this.listModels()).models.filter(
-        (availableModel) => availableModel.name === model
-      )
-    ) {
+  static async createOllama(model?: string): Promise<Ollama> {
+    try {
+      return new Ollama(model!);
+    } catch (error) {
       return new Ollama(fetchEnvVar("DEFAULT_OLLAMA_MODEL", "gemma3:4b"));
     }
-    return new Ollama(model);
   }
 
   /**
@@ -79,10 +80,72 @@ export default class Ollama implements OllamaClient {
    * @returns A promise that resolves to the list of available models.
    * @private
    */
-  private static async listModels(): Promise<OllamaModelListResponse> {
+  static async listModels(): Promise<OllamaResponse["tags"]> {
     const res = await fetch(`${this.ollamaApi}/tags`);
 
-    return (await res.json()) as OllamaModelListResponse;
+    return (await res.json()) as OllamaTagResponse;
+  }
+
+  static async createModel(
+    options: CreateModelOptions,
+  ): Promise<OllamaResponse["default"]> {
+    try {
+      const res = await fetch(`${this.ollamaApi}/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(options),
+      });
+
+      return (await res.json()) as unknown as OllamaBasicResponse;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  }
+
+  static async delete(model: string): Promise<void> {
+    try {
+      await fetch(`${this.ollamaApi}/delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ model }),
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Pulls a model from the Ollama library.
+   *
+   * @param model The model to pull from the Ollama library.
+   * @returns The response from the Ollama API.
+   */
+  static async pull(
+    options: PullModelOptions,
+  ): Promise<OllamaResponse["default"]> {
+    try {
+      const res = await fetch(`${this.ollamaApi}/pull`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(options),
+      });
+
+      return (await res.json()) as unknown as OllamaBasicResponse;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
   }
 
   /**
@@ -100,16 +163,22 @@ export default class Ollama implements OllamaClient {
    * console.log(response.total_duration); // Total generation time in nanoseconds
    * ```
    */
-  async generate(prompt: string): Promise<OllamaGenerateResponse> {
+  async generate(
+    options: OllamaGenerateOptions,
+  ): Promise<OllamaResponse["generate"]> {
+    if (!options.model) {
+      options.model = this.model;
+    }
+
     const res = await fetch(`${Ollama.ollamaApi}/generate`, {
       method: "POST",
-      body: JSON.stringify({
-        stream: false,
-        model: this.model,
-        prompt,
-      }),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(options),
     });
 
-    return (await res.json()) as OllamaGenerateResponse;
+    return (await res.json()) as unknown as OllamaGenerateResponse;
   }
 }

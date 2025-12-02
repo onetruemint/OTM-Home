@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const __dirname = getDirname(import.meta.url);
 dotenv.config({ path: `${__dirname}/../../.env` });
 
 /**
@@ -13,7 +12,7 @@ dotenv.config({ path: `${__dirname}/../../.env` });
  */
 export function fetchEnvVar<T extends string, D extends T = T>(
   variable: string,
-  defaultValue: D | null = null
+  defaultValue: D | null = null,
 ): T {
   if (!process.env[variable]) {
     if (defaultValue) {

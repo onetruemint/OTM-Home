@@ -1,4 +1,6 @@
-export interface Subscriber {}
+export interface Subscriber {
+  shutdown(): Promise<void>;
+}
 
 export interface SubscriberConfig {
   clientId: string;

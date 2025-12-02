@@ -1,4 +1,3 @@
-import * as utils from "./utils";
-import * as ollama from "./ollama/Ollama";
-
-export { utils, ollama };
+export * from "./utils";
+export * from "./ollama/Ollama";
+export * from "./persistence";

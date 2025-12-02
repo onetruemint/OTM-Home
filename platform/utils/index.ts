@@ -1,7 +1,7 @@
 import { fetchUrlToCheerio } from "./cheerio";
-import { appendFileSync, createDirectoriesSync } from "./fs";
+import { appendFileSync, readFileSync, createDirectoriesSync } from "./fs";
 import { getDirname, fetchEnvVar } from "./utils";
 
 export { fetchUrlToCheerio };
-export { appendFileSync, createDirectoriesSync };
+export { appendFileSync, readFileSync, createDirectoriesSync }
 export { getDirname, fetchEnvVar };

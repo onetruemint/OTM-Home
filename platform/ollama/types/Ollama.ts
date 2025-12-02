@@ -12,8 +12,34 @@ export interface OllamaGenerateResponse {
   eval_duration: number;
 }
 
-export interface OllamaModelListResponse {
+export interface OllamaGenerateOptions {
+  model?: string;
+  prompt?: string;
+  suffix?: string;
+  images?: string[];
+  format?: string | object;
+  system?: string;
+  stream?: boolean;
+  think?: boolean;
+  raw?: boolean;
+  keep_alive?: string | number;
+  options?: object;
+  logprobs?: boolean;
+  top_logprobs?: number;
+}
+
+export interface OllamaResponse {
+  tags: OllamaTagResponse;
+  default: OllamaBasicResponse;
+  generate: OllamaGenerateResponse;
+}
+
+export interface OllamaTagResponse {
   models: OllamaModel[];
+}
+
+export interface OllamaBasicResponse {
+  status: string;
 }
 
 export interface OllamaModel {
@@ -30,8 +56,26 @@ export interface OllamaModel {
   quantization_level: string;
 }
 
+export interface CreateModelOptions {
+  model: string;
+  from?: string;
+  system?: string;
+  template?: string;
+  license?: string | string[];
+  parameters?: object;
+  messages?: object[];
+  quantize?: string;
+  stream?: boolean;
+}
+
+export interface PullModelOptions {
+  model: string;
+  insecure?: boolean;
+  stream?: boolean;
+}
+
 export interface OllamaClient {
   model: string;
 
-  generate(prompt: string): Promise<OllamaGenerateResponse>;
+  generate(options: OllamaGenerateOptions): Promise<OllamaGenerateResponse>;
 }

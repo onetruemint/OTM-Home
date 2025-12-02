@@ -1,18 +1,22 @@
 name: Atomic-Void-Devcontainer
 networks:
-  kafka:
-    name: kafka
+  otm-home-kafka:
+    name: otm-home-kafka
     driver: bridge
-  ollama:
-    name: ollama
+  otm-home-ollama:
+    name: otm-home-ollama
+    driver: bridge
+  otm-home-elk:
+    name: otm-home-elk
     driver: bridge
 services:
   app:
     image: ${DOCKER_IMAGE}
     container_name: app
     networks:
-      - kafka
-      - ollama
+      - otm-home-kafka
+      - otm-home-ollama
+      - otm-home-elk
     volumes:
       - ..:/workspaces:cached
     command: sleep infinity

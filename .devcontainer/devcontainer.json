@@ -25,7 +25,7 @@
         "mintlify.document",
         "esbenp.prettier-vscode",
         "TypeScriptTeam.native-preview",
-        "Postman.postman-for-vscode"
+        "rangav.vscode-thunder-client"
       ]
     }
   }

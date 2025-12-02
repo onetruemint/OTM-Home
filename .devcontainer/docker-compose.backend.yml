@@ -1,26 +1,31 @@
 name: Atomic-Void-Backend
 volumes:
-  postgres_data:
-  kafka_data:
-  ollama_data:
+  otm-home-postgres_data:
+  otm-home-kafka_data:
+  otm-home-ollama_data:
+  otm-home-elasticsearch_data:
+  otm-home-kibana_data:
 networks:
-  kafka:
-    name: kafka
+  otm-home-kafka:
+    name: otm-home-kafka
     driver: bridge
-  storage:
-    name: storage
+  otm-home-storage:
+    name: otm-home-storage
     driver: bridge
-  ollama:
-    name: ollama
+  otm-home-ollama:
+    name: otm-home-ollama
+    driver: bridge
+  otm-home-elk:
+    name: otm-home-elk
     driver: bridge
 services:
-  ollama:
-    container_name: ollama
+  otm-home-ollama:
+    container_name: otm-home-ollama
     image: ${OLLAMA_IMAGE}
     volumes:
-      - ollama_data:/root/.ollama
+      - otm-home-ollama_data:/root/.ollama
     networks:
-      - ollama
+      - otm-home-ollama
     ports:
       - 11434:11434
     restart: unless-stopped
@@ -31,40 +36,40 @@ services:
             - driver: nvidia # Or 'amd' for AMD GPUs
               count: all
               capabilities: [gpu]
-  postgres:
+  otm-home-postgres:
     image: ${POSTGRES_IMAGE}
-    container_name: postgres
+    container_name: otm-home-postgres
     networks:
-      - storage
+      - otm-home-storage
     environment:
-      POSTGRES_DB: atomic-void
+      POSTGRES_DB: otm-home-
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - otm-home-postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  mongodb:
+  otm-home-mongodb:
     image: ${MONGO_IMAGE}
-    container_name: mongo
+    container_name: otm-home-mongo
     networks:
-      - storage
+      - otm-home-storage
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: atomic-void-user
-      MONGO_INITDB_ROOT_PASSWORD: atomic-void-password
+      MONGO_INITDB_ROOT_USERNAME: otm-home-user
+      MONGO_INITDB_ROOT_PASSWORD: otm-home-password
 
-  kafka:
+  otm-home-kafka:
     image: ${KAFKA_IMAGE}
-    container_name: kafka
+    container_name: otm-home-kafka
     ports:
       - 9092:9092
     volumes:
-      - kafka_data:/var/lib/kafka/data
+      - otm-home-kafka_data:/var/lib/kafka/data
     networks:
-      - kafka
+      - otm-home-kafka
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -79,3 +84,63 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: 3
     restart: always
+
+  # otm-home-council:
+  #   build:
+  #     context: ..
+  #     dockerfile: apps/council/Dockerfile
+  #   container_name: otm-home-council
+  #   ports:
+  #     - "3001:3001"
+  #   networks:
+  #     - otm-home-ollama
+  #   environment:
+  #     PORT: 3001
+  #     NODE_ENV: production
+  #     OLLAMA_HOST: http://otm-home-ollama:11434
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - otm-home-ollama
+
+  otm-home-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: otm-home-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - otm-home-elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - otm-home-elk
+    restart: unless-stopped
+
+  otm-home-logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: otm-home-logstash
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    volumes:
+      - ../platform/logger/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    networks:
+      - otm-home-elk
+    depends_on:
+      - otm-home-elasticsearch
+    restart: unless-stopped
+
+  otm-home-kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: otm-home-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://otm-home-elasticsearch:9200
+    networks:
+      - otm-home-elk
+    depends_on:
+      - otm-home-elasticsearch
+    restart: unless-stopped

@@ -10,7 +10,7 @@ import {
   GoodNewsH3,
   GoodNewsPeriod,
 } from "./types/GoodNews";
-import Ollama, { OllamaClient } from "@platform/ollama";
+import { Ollama, OllamaClient } from "@platform/ollama";
 
 /**
  * Main class for fetching, processing, and summarizing good news articles from various sources.
@@ -50,7 +50,7 @@ export default class GoodNews implements GoodNewsInterface {
    * @returns {Promise<GoodNews>} A Promise that resolves to a new GoodNews instance
    */
   static async create(period: GoodNewsPeriod) {
-    const ollamaClient = await Ollama.create(consts.OLLAMA_MODEL);
+    const ollamaClient = await Ollama.createOllama(consts.OLLAMA_MODEL);
 
     return new GoodNews(period, ollamaClient);
   }
@@ -75,9 +75,7 @@ export default class GoodNews implements GoodNewsInterface {
     const today = now.format("MMMMD");
     const lastPeriod = dayjs(this.lastAcceptableDate).format("MMMMD");
     const periodDir = `${lastPeriod}_${today}`;
-    const dataDir = `${utils.getDirname(
-      import.meta.url
-    )}/data/${year}/${periodDir}`;
+    const dataDir = `${__dirname}/data/${year}/${periodDir}`;
     await utils.createDirectoriesSync(dataDir);
     for (const summary of data) {
       const subjectFile = `${dataDir}/${summary.article.headline.source}.txt`;
@@ -178,9 +176,9 @@ export default class GoodNews implements GoodNewsInterface {
    * @returns {Promise<GoodNewsSummary>} A Promise that resolves to a summary object containing the article and its score
    */
   async generateSummary(article: GoodNewsArticle): Promise<GoodNewsSummary> {
-    const res = await this.ollamaClient.generate(
-      `${article.headline.title} ${article.content}`
-    );
+    const res = await this.ollamaClient.generate({
+      prompt: `${article.headline.title} ${article.content}`,
+    });
 
     const score = Number(res.response);
 
@@ -204,7 +202,7 @@ export default class GoodNews implements GoodNewsInterface {
    */
   async fetchTopStories() {
     const headlines: GoodNewsHeadline[] = await this.fetchHeadlines(
-      consts.HEADLINE_TYPES
+      consts.HEADLINE_TYPES,
     );
 
     const articles: GoodNewsArticle[] = [];

@@ -1,5 +1,5 @@
 import express, { Express } from "express";
-import { goodNewsRouter } from "./routes/good-news-router";
+import { goodNewsRouter } from "./good-news/router";
 
 /**
  * Creates and configures the Express application for GoodNews

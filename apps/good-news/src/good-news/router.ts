@@ -5,7 +5,7 @@ import {
   getHeadlines,
   getHeadlinesBySource,
   getArticle,
-} from "./good-news-controller";
+} from "./controller";
 
 /**
  * Creates and configures the GoodNews router with all endpoints

@@ -1,10 +1,7 @@
 name: Atomic-Void-Devcontainer
 networks:
-  otm-home-kafka:
-    name: otm-home-kafka
-    driver: bridge
-  otm-home-ollama:
-    name: otm-home-ollama
+  otm-home:
+    name: otm-home
     driver: bridge
   otm-home-elk:
     name: otm-home-elk
@@ -14,8 +11,7 @@ services:
     image: ${DOCKER_IMAGE}
     container_name: app
     networks:
-      - otm-home-kafka
-      - otm-home-ollama
+      - otm-home
       - otm-home-elk
     volumes:
       - ..:/workspaces:cached

@@ -1,31 +1,60 @@
 name: Atomic-Void-Backend
 volumes:
-  otm-home-postgres_data:
+  otm-home-kc-pg_data:
   otm-home-kafka_data:
   otm-home-ollama_data:
   otm-home-elasticsearch_data:
   otm-home-kibana_data:
 networks:
-  otm-home-kafka:
-    name: otm-home-kafka
-    driver: bridge
-  otm-home-storage:
-    name: otm-home-storage
-    driver: bridge
-  otm-home-ollama:
-    name: otm-home-ollama
-    driver: bridge
+  otm-home:
+    name: otm-home
+    driver: brdige
   otm-home-elk:
     name: otm-home-elk
     driver: bridge
 services:
+  otm-home-kc-pg:
+    image: ${KC_PG_IMAGE}
+    container_name: otm-home-kc-pg
+    networks:
+      - otm-home
+    volumes:
+      - otm-home-kc-pg_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    restart: unless-stopped
+
+  otm-home-auth:
+    container_name: otm-home-auth
+    image: ${KEYCLOAK_IMAGE}
+    networks:
+      - otm-home
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      - otm-home-kc-pg
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://otm-home-kc-pg:5432/keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    command: start-dev
+
   otm-home-ollama:
     container_name: otm-home-ollama
     image: ${OLLAMA_IMAGE}
     volumes:
       - otm-home-ollama_data:/root/.ollama
     networks:
-      - otm-home-ollama
+      - otm-home
     ports:
       - 11434:11434
     restart: unless-stopped
@@ -36,26 +65,12 @@ services:
             - driver: nvidia # Or 'amd' for AMD GPUs
               count: all
               capabilities: [gpu]
-  otm-home-postgres:
-    image: ${POSTGRES_IMAGE}
-    container_name: otm-home-postgres
-    networks:
-      - otm-home-storage
-    environment:
-      POSTGRES_DB: otm-home-
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - otm-home-postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
 
   otm-home-mongodb:
     image: ${MONGO_IMAGE}
     container_name: otm-home-mongo
     networks:
-      - otm-home-storage
+      - otm-home
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: otm-home-user
@@ -69,7 +84,7 @@ services:
     volumes:
       - otm-home-kafka_data:/var/lib/kafka/data
     networks:
-      - otm-home-kafka
+      - otm-home
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -93,7 +108,7 @@ services:
   #   ports:
   #     - "3001:3001"
   #   networks:
-  #     - otm-home-ollama
+  #     - otm-home
   #   environment:
   #     PORT: 3001
   #     NODE_ENV: production

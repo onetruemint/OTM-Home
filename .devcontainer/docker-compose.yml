@@ -1,4 +1,4 @@
-name: Atomic-Void-Devcontainer
+name: otm-home-devcontainer
 networks:
   otm-home:
     name: otm-home

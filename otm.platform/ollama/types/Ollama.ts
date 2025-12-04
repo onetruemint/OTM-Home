@@ -56,7 +56,7 @@ export interface OllamaModel {
   quantization_level: string;
 }
 
-export interface CreateModelOptions {
+export interface OllamaCreateModelOptions {
   model: string;
   from?: string;
   system?: string;
@@ -68,7 +68,7 @@ export interface CreateModelOptions {
   stream?: boolean;
 }
 
-export interface PullModelOptions {
+export interface OllamaPullModelOptions {
   model: string;
   insecure?: boolean;
   stream?: boolean;

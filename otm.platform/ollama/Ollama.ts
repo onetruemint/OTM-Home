@@ -1,13 +1,13 @@
 import { fetchEnvVar } from "@platform/utils";
 import {
-  CreateModelOptions,
+  OllamaCreateModelOptions,
   OllamaBasicResponse,
   OllamaClient,
   OllamaGenerateOptions,
   OllamaGenerateResponse,
   OllamaResponse,
   OllamaTagResponse,
-  PullModelOptions,
+  OllamaPullModelOptions,
 } from "./types/Ollama";
 
 /**
@@ -87,7 +87,7 @@ export default class Ollama implements OllamaClient {
   }
 
   static async createModel(
-    options: CreateModelOptions,
+    options: OllamaCreateModelOptions,
   ): Promise<OllamaResponse["default"]> {
     try {
       const res = await fetch(`${this.ollamaApi}/create`, {
@@ -129,7 +129,7 @@ export default class Ollama implements OllamaClient {
    * @returns The response from the Ollama API.
    */
   static async pull(
-    options: PullModelOptions,
+    options: OllamaPullModelOptions,
   ): Promise<OllamaResponse["default"]> {
     try {
       const res = await fetch(`${this.ollamaApi}/pull`, {

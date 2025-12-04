@@ -10,10 +10,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@platform/*": ["./platform/*"],
+      "@platform/*": ["./otm.platform/*"],
       "@apps/*": ["./apps/*"]
     }
   },
-  "include": ["platform/**/*", "apps/**/*"],
+  "include": ["otm.platform/**/*", "apps/**/*"],
   "exclude": ["node_modules", "dist"]
 }

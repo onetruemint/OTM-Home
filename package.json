@@ -1,5 +1,5 @@
 {
-  "name": "atomic-void",
+  "name": "otm-home",
   "private": true,
   "version": "1.0.0",
   "description": "",
@@ -8,19 +8,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/onetruemint/atomic-void.git"
+    "url": "git+https://github.com/onetruemint/otm-home.git"
   },
   "workspaces": [
-    "platform/**/*",
+    "otm.platform/**/*",
     "apps/**/*"
   ],
   "author": "Mint",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/onetruemint/atomic-void/issues"
+    "url": "https://github.com/onetruemint/otm-home/issues"
   },
-  "homepage": "https://github.com/onetruemint/atomic-void#readme",
+  "homepage": "https://github.com/onetruemint/otm-home#readme",
   "scripts": {
     "build": "tsc --build"
   },

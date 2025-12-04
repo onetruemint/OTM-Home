@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "private": true,
   "scripts": {
     "test": "npm run jest --collect-coverage --verbose",
     "lint": "npm run eslint --fix",

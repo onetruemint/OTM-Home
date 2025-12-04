@@ -1,10 +1,16 @@
 {
-  "name": "ryoiki-tenkai-frontend",
+  "name": "@otm-home/frontend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc --build",
+    "start": "node dist/src/server.js",
+    "dev": "npx tsx src/server.ts",
+    "council": "npx tsx src/Council.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -rf dist .turbo node_modules/.cache"
   },
   "author": "",
   "license": "ISC"

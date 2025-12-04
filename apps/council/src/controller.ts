@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import Council from "./Council";
-import * as utils from "@platform/utils";
+import * as utils from "@otm/utils";
+import * as fs from "fs";
 
 export async function getHealth(
   req: Request,
@@ -45,7 +46,7 @@ export function getMembers() {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const councilJson = `${__dirname}/members.json`;
-      const data = await utils.readFileSync(councilJson);
+      const data = fs.readFileSync(councilJson, "utf8");
       const councilData = JSON.parse(data);
 
       res.status(200).json({
@@ -61,7 +62,7 @@ export function getElites() {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const councilJson = `${__dirname}/members.json`;
-      const data = await utils.readFileSync(councilJson);
+      const data = fs.readFileSync(councilJson, "utf8");
       const councilData = JSON.parse(data);
 
       res.status(200).json({

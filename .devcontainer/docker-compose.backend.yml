@@ -1,4 +1,4 @@
-name: Atomic-Void-Backend
+name: otm-home-backend
 volumes:
   otm-home-kc-pg_data:
   otm-home-kafka_data:

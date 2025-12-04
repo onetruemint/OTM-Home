@@ -1,38 +1,30 @@
 {
-  "name": "atomic-void",
+  "name": "with-yarn",
   "private": true,
-  "version": "1.0.0",
-  "description": "",
-  "engines": {
-    "node": "25.x"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/onetruemint/atomic-void.git"
-  },
-  "workspaces": [
-    "platform/**/*",
-    "apps/**/*"
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE"
   ],
-  "author": "Mint",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/onetruemint/atomic-void/issues"
-  },
-  "homepage": "https://github.com/onetruemint/atomic-void#readme",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc --build"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "clean": "turbo run clean"
   },
   "devDependencies": {
-    "@eslint/css": "^0.10.0",
-    "@eslint/js": "^9.34.0",
-    "@eslint/json": "^0.13.2",
-    "@eslint/markdown": "^7.2.0",
-    "eslint": "^9.34.0",
-    "globals": "^16.3.0",
-    "gts": "^6.0.2",
-    "typescript": "^5.9.2",
-    "typescript-eslint": "^8.41.0"
+    "prettier": "^3.2.5",
+    "turbo": "^2.6.2"
+  },
+  "packageManager": "yarn@1.22.22",
+  "engines": {
+    "node": ">=18"
   }
 }

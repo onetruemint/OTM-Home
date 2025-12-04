@@ -78,13 +78,13 @@ export function getHeadlines() {
 export function getHeadlinesBySource() {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const source = req.params.source;
+      const source = String(req.params.source);
       const period = req.query.period
         ? Number(req.query.period)
         : GoodNewsPeriod.WEEK;
 
       if (!consts.HEADLINE_TYPES[source]) {
-        res.status(404).json({
+        return res.status(404).json({
           error: `Source '${source}' not found. Available sources: ${Object.keys(
             consts.HEADLINE_TYPES,
           ).join(", ")}`,
@@ -96,7 +96,7 @@ export function getHeadlinesBySource() {
         consts.HEADLINE_TYPES[source],
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         source: source,
         count: headlines.length,
         headlines: headlines,

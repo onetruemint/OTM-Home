@@ -1,4 +1,4 @@
-import { OllamaClient } from "@platform/ollama";
+import { OllamaClient } from "@otm/ollama";
 
 export type GoodNewsUrlMap = Record<string, string>;
 

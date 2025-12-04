@@ -1,0 +1,12 @@
+{
+  "name": "@otm/messaging",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4"
+  }
+}

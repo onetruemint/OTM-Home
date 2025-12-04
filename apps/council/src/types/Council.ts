@@ -1,4 +1,4 @@
-import { OllamaClient } from "@platform/ollama";
+import { OllamaClient } from "@otm/ollama";
 
 export interface CouncilMember {
   name: string;
@@ -17,7 +17,7 @@ export interface CouncilInterface {
 }
 
 export interface CouncilDiscussion {
-  participant: OllamaClient,
-  status: string,
-  votes: number,
+  participant: OllamaClient;
+  status: string;
+  votes: number;
 }

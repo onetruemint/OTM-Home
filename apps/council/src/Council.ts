@@ -1,11 +1,11 @@
-import { Ollama, OllamaClient } from "@platform/ollama";
+import { Ollama, OllamaClient, OllamaModel } from "@otm/ollama";
 import {
   CouncilDiscussion,
   CouncilInterface,
   CouncilMember,
   MemberJson,
 } from "./types/Council";
-import * as utils from "@platform/utils";
+import * as utils from "@otm/utils";
 
 export default class Council implements CouncilInterface {
   members: OllamaClient[];
@@ -37,7 +37,9 @@ export default class Council implements CouncilInterface {
     council: CouncilMember[],
   ): Promise<OllamaClient[]> {
     const availableModels = await Ollama.listModels();
-    const modelSet = new Set(availableModels.models.map((item) => item.name));
+    const modelSet = new Set(
+      availableModels.models.map((item: OllamaModel) => item.name),
+    );
 
     const councilMembers: OllamaClient[] = [];
 

@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import * as consts from "./consts";
-import * as utils from "@platform/utils";
+import * as utils from "@otm/utils";
 import {
   GoodNewsInterface,
   GoodNewsArticle,
@@ -10,7 +10,7 @@ import {
   GoodNewsH3,
   GoodNewsPeriod,
 } from "./types/GoodNews";
-import { Ollama, OllamaClient } from "@platform/ollama";
+import { Ollama, OllamaClient } from "@otm/ollama";
 
 /**
  * Main class for fetching, processing, and summarizing good news articles from various sources.
@@ -124,7 +124,7 @@ export default class GoodNews implements GoodNewsInterface {
 
     const headlines: GoodNewsHeadline[] = [];
 
-    $(".td_module_3").each((_, element) => {
+    $(".td_module_3").each((_: any, element) => {
       const data = $(element).find("h3 a").attr() as unknown as GoodNewsH3;
       const dateText = $(element).find(".td-post-date").text().trim();
       const date = new Date(dateText);

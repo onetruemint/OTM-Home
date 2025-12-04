@@ -1,7 +1,5 @@
-import { Request, Response } from "express";
-import { StatusCodes } from "http-status-codes";
-import { MintService, createHttpsServer, LogLevel } from "@otm.platform";
-import { mintRouter } from "./otm.app/otm.router";
+import { MintService, createHttpsServer } from "@otm/service";
+import { LogLevel } from "@otm/logger";
 
 const HTTPS_PORT = parseInt(process.env.HTTPS_PORT || "3443");
 
@@ -16,15 +14,15 @@ const app = MintService({
 });
 
 // Register routes
-app.use("/", mintRouter());
+// app.use("/", mintRouter());
 
 // 404 handler
-app.use("*", (req: Request, res: Response) => {
-  res.status(StatusCodes.NOT_FOUND).json({
-    error: "Route not found",
-    path: req.originalUrl,
-  });
-});
+// app.use("*", (req: Request, res: Response) => {
+//   res.status(StatusCodes.NOT_FOUND).json({
+//     error: "Route not found",
+//     path: req.originalUrl,
+//   });
+// });
 
 // Create HTTPS server
 const httpsServer = createHttpsServer(app, {

@@ -5,11 +5,11 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "build": "tsc --build",
-    "start": "node dist/src/server.js",
-    "dev": "npx tsx src/server.ts",
-    "fetch": "npx tsx src/GoodNews.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
   },
   "author": "",
   "license": "ISC",

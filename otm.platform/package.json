@@ -1,5 +1,5 @@
 {
-  "name": "@otm/platform",
+  "name": "@otm-home/platform",
   "version": "1.0.0",
   "description": "",
   "type": "module",
@@ -12,12 +12,11 @@
   ],
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "rm -rf ./dist; tsc --build",
-    "clean": "rm -rf dist && rm -rf node_modules",
-    "dev": "npm run nodemon --exec ts-node --files src/*",
-    "lint": "npm run eslint src/\"**/*.{ts,tsx}\"",
-    "lint:ci": "npm run lint",
-    "lint:fix": "npm run lint --fix",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types",
     "test": "npx jest --coverage --verbose",
     "test:ci": "npx jest --config=./jest.config.ci.mjs --verbose",
     "test:dev": "npx jest --watch --coverage --verbose"

@@ -5,11 +5,11 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "tsc --build",
-    "start": "node dist/src/server.js",
-    "dev": "npx tsx src/server.ts",
-    "council": "npx tsx src/Council.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

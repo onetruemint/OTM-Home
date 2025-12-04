@@ -1,11 +1,15 @@
 {
-  "name": "ryoiki-tenkai-frontend",
+  "name": "@otm-home/frontend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
   },
   "author": "",
   "license": "ISC"

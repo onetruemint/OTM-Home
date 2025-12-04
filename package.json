@@ -1,5 +1,5 @@
 {
-  "name": "with-yarn",
+  "name": "otm-home",
   "private": true,
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",

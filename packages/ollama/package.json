@@ -8,5 +8,8 @@
   },
   "scripts": {
     "clean": "rm -rf dist .turbo node_modules/.cache"
+  },
+  "dependencies": {
+    "@otm/utils": "*"
   }
 }

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@otm/ollama": "*",
+    "@otm/utils": "*",
     "express": "^5.1.0"
   }
 }

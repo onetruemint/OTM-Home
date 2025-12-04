@@ -8,7 +8,7 @@ volumes:
 networks:
   otm-home:
     name: otm-home
-    driver: brdige
+    driver: bridge
   otm-home-elk:
     name: otm-home-elk
     driver: bridge
@@ -100,22 +100,22 @@ services:
       KAFKA_NUM_PARTITIONS: 3
     restart: always
 
-  # otm-home-council:
-  #   build:
-  #     context: ..
-  #     dockerfile: apps/council/Dockerfile
-  #   container_name: otm-home-council
-  #   ports:
-  #     - "3001:3001"
-  #   networks:
-  #     - otm-home
-  #   environment:
-  #     PORT: 3001
-  #     NODE_ENV: production
-  #     OLLAMA_HOST: http://otm-home-ollama:11434
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - otm-home-ollama
+  otm-home-council:
+    build:
+      context: ..
+      dockerfile: apps/council/Dockerfile
+    container_name: otm-home-council
+    ports:
+      - "3001:3001"
+    networks:
+      - otm-home
+    environment:
+      PORT: 3001
+      NODE_ENV: production
+      OLLAMA_HOST: http://otm-home-ollama:11434
+    restart: unless-stopped
+    depends_on:
+      - otm-home-ollama
 
   otm-home-elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
@@ -140,7 +140,7 @@ services:
       - "5000:5000"
       - "9600:9600"
     volumes:
-      - ../platform/logger/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ../packages/logger/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     networks:
       - otm-home-elk
     depends_on:

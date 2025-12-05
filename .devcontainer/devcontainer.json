@@ -1,9 +1,9 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
-  "name": "Atomic Void",
+  "name": "OTM Home",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "dockerComposeFile": "./docker-compose.yml",
+  "dockerComposeFile": "./docker-compose.devcontainer.yml",
   "service": "app",
   "workspaceFolder": "/workspaces",
   "shutdownAction": "stopCompose",

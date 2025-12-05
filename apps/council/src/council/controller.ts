@@ -1,7 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import Council from "./Council";
-import * as utils from "@otm/utils";
-import * as fs from "fs";
 
 export async function getHealth(
   req: Request,
@@ -18,8 +15,9 @@ export async function getHealth(
   }
 }
 
-export function vote() {
+export function addToQueue() {
   return async (req: Request, res: Response, next: NextFunction) => {
+    const council = req.app.locals.council;
     try {
       const { prompt } = req.body;
 
@@ -29,8 +27,7 @@ export function vote() {
         });
       }
 
-      const council = await Council.createCouncil();
-      const result = await council.vote(prompt);
+      const result = await council.addToQueue(prompt);
 
       res.status(200).json({
         prompt,
@@ -44,13 +41,23 @@ export function vote() {
 
 export function getMembers() {
   return async (req: Request, res: Response, next: NextFunction) => {
+    const council = req.app.locals.council;
     try {
-      const councilJson = `${__dirname}/members.json`;
-      const data = fs.readFileSync(councilJson, "utf8");
-      const councilData = JSON.parse(data);
-
       res.status(200).json({
-        members: councilData.members,
+        members: council.members,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+}
+
+export function getStatus() {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const council = req.app.locals.council;
+    try {
+      res.status(200).json({
+        status: council.status,
       });
     } catch (error) {
       next(error);
@@ -60,13 +67,10 @@ export function getMembers() {
 
 export function getElites() {
   return async (req: Request, res: Response, next: NextFunction) => {
+    const council = req.app.locals.council;
     try {
-      const councilJson = `${__dirname}/members.json`;
-      const data = fs.readFileSync(councilJson, "utf8");
-      const councilData = JSON.parse(data);
-
       res.status(200).json({
-        elites: councilData.elites,
+        elites: council.elites,
       });
     } catch (error) {
       next(error);

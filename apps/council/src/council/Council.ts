@@ -1,36 +1,84 @@
+import { EventEmitter } from "events";
 import { Ollama, OllamaClient, OllamaModel } from "@otm/ollama";
 import {
   CouncilDiscussion,
   CouncilInterface,
   CouncilMember,
+  CouncilStatus,
   MemberJson,
-} from "./types/Council";
+} from "../types/Council";
 import * as utils from "@otm/utils";
+import { KafkaBroker, topics, useKafkaConfig } from "@otm/kafka";
+import { IncomingCouncilMessage } from "../messaging/CouncilTopics";
+import { Logger } from "@otm/logger";
 
 export default class Council implements CouncilInterface {
+  logger: Logger;
+  councilKafka: KafkaBroker;
   members: OllamaClient[];
   elites: OllamaClient[];
+  status: CouncilStatus;
+  private queue: string[];
+  private queueEmitter: EventEmitter;
 
   // Timing constants in milliseconds
-  private static readonly GENERAL_DISCUSSION_TIME = 7 * 60 * 1000; // 7 minutes
+  private static readonly GENERAL_DISCUSSION_TIME = 7 * utils.ONE_MINUTE; // 7 minutes
+  private static readonly COUNCIL_CLIENT_ID = "otm-home.council";
 
-  private constructor(members: OllamaClient[], elites: OllamaClient[]) {
+  private constructor(
+    kafkaConnection: KafkaBroker,
+    members: OllamaClient[],
+    elites: OllamaClient[],
+    logger: Logger,
+  ) {
+    this.councilKafka = kafkaConnection;
     this.members = members;
     this.elites = elites;
+    this.status = CouncilStatus.ADJOURNED;
+    this.queue = [];
+    this.queueEmitter = new EventEmitter();
+    this.logger = logger;
   }
 
-  static async createCouncil(): Promise<Council> {
+  /** Kafka */
+  private static async establishKafka() {
+    const config = useKafkaConfig();
+    config.clientId = Council.COUNCIL_CLIENT_ID;
+    const broker = new KafkaBroker(config);
+    await broker.connect();
+
+    return broker;
+  }
+
+  private async councilPromptHandler(
+    _: string,
+    message: IncomingCouncilMessage | null,
+  ) {
+    if (message) {
+      this.addToQueue(message.prompt);
+    }
+  }
+
+  private async councilSubscribe() {
+    await this.councilKafka.subscribe(
+      topics.council.queue,
+      this.councilPromptHandler,
+    );
+  }
+
+  /** Council Business Logic */
+
+  static async createCouncil(logger: Logger): Promise<Council> {
     const councilJson = `${__dirname}/members.json`;
     const data = await utils.readFileSync(councilJson);
     const council: MemberJson = JSON.parse(data);
-    console.info(`Creating Council from ${JSON.stringify(council, null, 2)}`);
 
-    console.info(`Loading members ${JSON.stringify(council.members, null, 2)}`);
     const members = await this.loadCouncil(council.members);
-    console.info(`Loading elites: ${JSON.stringify(council.elites, null, 2)}`);
     const elites = await this.loadCouncil(council.elites);
 
-    return new Council(members, elites);
+    const broker = await this.establishKafka();
+
+    return new Council(broker, members, elites, logger);
   }
 
   private static async loadCouncil(
@@ -46,16 +94,12 @@ export default class Council implements CouncilInterface {
     for (const member of council) {
       if (!modelSet.has(member.name)) {
         if (!modelSet.has(member.model)) {
-          console.warn(`${member.model} not found, pulling.`);
           await Ollama.pull({
             model: member.model,
             stream: false,
           });
         }
 
-        console.info(
-          `Creating model from ${member.model} named ${member.name}`,
-        );
         const createRes = await Ollama.createModel({
           model: member.name,
           from: member.model,
@@ -76,22 +120,23 @@ export default class Council implements CouncilInterface {
     return councilMembers;
   }
 
-  async vote(prompt: string) {
-    console.info(`[Council] Starting vote on prompt: ${prompt}`);
+  private async vote(prompt: string) {
+    this.logger.info(`[Council] Starting vote on prompt: ${prompt}`);
 
     // Run all discussion phases in sequence
     const generalResults = await this.generalDiscussion(prompt);
-    console.info(JSON.stringify(generalResults, null, 2));
+    this.logger.info(JSON.stringify(generalResults, null, 2));
     const votes = await this.eliteDiscussion(generalResults);
 
     const finalResults = await this.finalAnswer(votes);
-    console.info(finalResults);
+    this.logger.info(finalResults);
 
     return finalResults;
   }
 
-  async generalDiscussion(prompt: string) {
-    console.info(`[Council] Starting general discussion`);
+  private async generalDiscussion(prompt: string) {
+    this.logger.info(`[Council] Starting general discussion`);
+    this.status = CouncilStatus.IN_SESSION;
     const startTime = Date.now();
     const endTime = startTime + Council.GENERAL_DISCUSSION_TIME;
     const discussion: CouncilDiscussion[] = this.members.map((participant) => ({
@@ -104,7 +149,7 @@ export default class Council implements CouncilInterface {
 
     while (Date.now() < endTime) {
       votingRound += 1;
-      console.info(`[Council] General discussion round ${votingRound}`);
+      this.logger.info(`[Council] General discussion round ${votingRound}`);
       for (const [index, discussionObj] of discussion.entries()) {
         if (Date.now() > endTime) {
           break;
@@ -124,7 +169,6 @@ export default class Council implements CouncilInterface {
         });
 
         prevDiscussionStatus = res.response;
-        console.info(votingRound, prevDiscussionStatus);
         if (discussion[index]) {
           discussion[index].status = prevDiscussionStatus;
         }
@@ -134,10 +178,12 @@ export default class Council implements CouncilInterface {
     return discussion;
   }
 
-  async eliteDiscussion(
+  private async eliteDiscussion(
     discussions: CouncilDiscussion[],
   ): Promise<CouncilDiscussion[]> {
-    console.info(`[Council] Engaging in Elite voting.`);
+    this.logger.info(`[Council] Engaging in Elite voting.`);
+    this.status = CouncilStatus.EVALUATING;
+
     for (const discussion of discussions) {
       for (const elite of this.elites) {
         const res = await elite.generate({
@@ -159,7 +205,7 @@ export default class Council implements CouncilInterface {
     return discussions;
   }
 
-  async finalAnswer(discussions: CouncilDiscussion[]): Promise<string> {
+  private async finalAnswer(discussions: CouncilDiscussion[]): Promise<string> {
     const bestDiscussion = discussions.reduce((acc, discussion) => {
       if (!acc || discussion.votes > acc.votes) {
         return discussion;
@@ -167,41 +213,43 @@ export default class Council implements CouncilInterface {
       return acc;
     }, discussions[0]);
 
+    this.status = CouncilStatus.ADJOURNED;
+
     return bestDiscussion?.status || "";
   }
-}
 
-async function main() {
-  const council = await Council.createCouncil();
-  await council.vote(
-    "What is the best place for an American to purchase PC parts from Shenzhen, China? Weigh in factors such as reliability, quality, and affordability.",
-  );
-  // await council.eliteDiscussion([
-  //   {
-  //     participant: await Ollama.createOllama("MemberGemma:latest"),
-  //     status:
-  //       "What is the best place for an American to purchase PC parts from Shenzhen, China? Weigh in factors such as reliability, quality, and affordability.",
-  //     votes: 0,
-  //   },
-  //   {
-  //     participant: await Ollama.createOllama("MemberGwen:latest"),
-  //     status:
-  //       "What is the best place for an American to purchase PC parts from Shenzhen, China? Weigh in factors such as reliability, quality, and affordability.",
-  //     votes: 0,
-  //   },
-  //   {
-  //     participant: await Ollama.createOllama("MemberLlama:latest"),
-  //     status:
-  //       "What is the best place for an American to purchase PC parts from Shenzhen, China? Weigh in factors such as reliability, quality, and affordability.",
-  //     votes: 0,
-  //   },
-  //   {
-  //     participant: await Ollama.createOllama("MemberMistral:latest"),
-  //     status:
-  //       "What is the best place for an American to purchase PC parts from Shenzhen, China? Weigh in factors such as reliability, quality, and affordability.",
-  //     votes: 0,
-  //   },
-  // ]);
-}
+  /** Council Management */
 
-main();
+  async runCouncil(): Promise<void> {
+    await this.councilKafka.connect();
+    await this.councilSubscribe();
+
+    await this.voteLoop();
+  }
+
+  async addToQueue(prompt: string): Promise<string> {
+    try {
+      this.queue.push(prompt);
+      this.queueEmitter.emit("itemAdded");
+    } catch (error) {
+      this.logger?.error(`Error adding to queue: ${error}`);
+    }
+    return `Prompt added successfully ${prompt}`;
+  }
+
+  private async voteLoop() {
+    while (true) {
+      if (this.queue.length === 0) {
+        // Wait for an item to be added to the queue
+        await new Promise((resolve) =>
+          this.queueEmitter.once("itemAdded", resolve),
+        );
+      }
+
+      const prompt = String(this.queue.shift());
+      const answer = await this.vote(prompt);
+
+      await this.councilKafka.publish(topics.council.processed, answer);
+    }
+  }
+}

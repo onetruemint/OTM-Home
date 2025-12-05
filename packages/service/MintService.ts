@@ -1,21 +1,21 @@
 import express, { Express } from "express";
 import * as https from "https";
+import * as http from "http";
 import * as fs from "fs";
-import { LoggerConfig, createLogger } from "../logger";
+import { LoggerConfig, createLogger } from "@otm/logger";
 import {
   KeycloakClient,
   KeycloakConfig,
   createAuthMiddleware,
 } from "@otm/auth";
-import { errorHandler } from "../exceptions";
+import { errorHandler } from "@otm/exceptions";
 import KeycloakConnect from "keycloak-connect";
-import cors = require("cors");
+import cors from "cors";
 
 export interface MintExpressProps {
   serviceName: string;
   useKeycloak?: boolean;
   logger?: LoggerConfig;
-  https?: boolean;
   httpsPort?: number;
   certPath?: string;
   keyPath?: string;
@@ -68,7 +68,14 @@ export function MintService(props: MintExpressProps): MintExpressApp {
   return app;
 }
 
-export function createHttpsServer(
+export function createExpressHttpServer(
+  app: Express,
+  props: MintExpressProps,
+): http.Server {
+  return http.createServer(app);
+}
+
+export function createExpressHttpsServer(
   app: Express,
   props: MintExpressProps,
 ): https.Server {

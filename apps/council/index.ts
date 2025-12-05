@@ -1,3 +1,2 @@
-export { createApp } from "./src/app";
-export { councilRouter } from "./src/router";
-export * from "./src/controller";
+export { councilRouter } from "./src/council/router";
+export * from "./src/council/controller";

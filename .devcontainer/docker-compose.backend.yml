@@ -76,6 +76,18 @@ services:
       MONGO_INITDB_ROOT_USERNAME: otm-home-user
       MONGO_INITDB_ROOT_PASSWORD: otm-home-password
 
+  otm-home-kafka-ui:
+    container_name: otm-home-kafka-ui
+    image: ${KAFKA_UI_IMAGE}
+    depends_on:
+      - otm-home-kafka
+    ports:
+      - 8081:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: wizard_test
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: otm-home-kafka:9092
+
   otm-home-kafka:
     image: ${KAFKA_IMAGE}
     container_name: otm-home-kafka
@@ -89,7 +101,7 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://otm-home-kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: PLAINTEXT_HOST
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
@@ -98,24 +110,8 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
     restart: always
-
-  otm-home-council:
-    build:
-      context: ..
-      dockerfile: apps/council/Dockerfile
-    container_name: otm-home-council
-    ports:
-      - "3001:3001"
-    networks:
-      - otm-home
-    environment:
-      PORT: 3001
-      NODE_ENV: production
-      OLLAMA_HOST: http://otm-home-ollama:11434
-    restart: unless-stopped
-    depends_on:
-      - otm-home-ollama
 
   otm-home-elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0

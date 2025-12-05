@@ -1,45 +1,24 @@
 name: council-app
 
 networks:
-  otm-home-ollama:
-    external: true
-    name: otm-home-ollama
+  otm-home:
+    name: otm-home
+    driver: bridge
 
 services:
-  council:
+  otm-home-council:
     build:
-      context: ../..
+      context: ..
       dockerfile: apps/council/Dockerfile
     container_name: otm-home-council
     ports:
-      - "3001:3001"
+      - "9001:9001"
     networks:
-      - otm-home-ollama
+      - otm-home
     environment:
-      - PORT=3001
-      - NODE_ENV=production
-      - OLLAMA_HOST=http://otm-home-ollama:11434
+      OTM_HOME_COUNCIL_PORT: 9001,
+      SSL_CERT_PATH: "/usr/local/share/ca-certificates/mint/server.crt"
+      SSL_KEY_PATH: "/usr/local/share/ca-certificates/mint/server.key"
+      NODE_ENV: production
+      OLLAMA_HOST: http://otm-home-ollama:11434
     restart: unless-stopped
-    depends_on:
-      - ollama
-
-  ollama:
-    image: ollama/ollama:latest
-    container_name: otm-home-ollama
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - otm-home-ollama
-    ports:
-      - "11434:11434"
-    restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
-volumes:
-  ollama_data:

@@ -1,20 +1,36 @@
-import express, { Express } from "express";
-import { councilRouter } from "./router";
+import { Express } from "express";
+import { councilRouter } from "./council/router";
+import { MintExpressProps, MintService } from "@otm/service";
+import Council from "./council/Council";
+import { createLogger } from "@otm/logger";
+import { fetchEnvVar } from "@otm/utils";
+import { KafkaBroker, useKafkaConfig } from "@otm/kafka";
 
-export function createApp(): Express {
-  const app = express();
+export async function createCouncilApp(): Promise<Express> {
+  const logger = createLogger();
 
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  const appProps: MintExpressProps = {
+    serviceName: "MintStarter",
+  };
 
-  app.use("/api/council", councilRouter());
+  const app = MintService(appProps);
 
-  app.get("/", (req, res) => {
-    res.json({
-      message: "Council API",
-      version: "1.0.0",
-    });
+  // const council = await Council.createCouncil(logger);
+  // council.runCouncil();
+
+  // app.locals.council = council;
+  const config = useKafkaConfig();
+  const councilKafka = new KafkaBroker(config);
+  await councilKafka.connect();
+  await councilKafka.subscribe("test-topic", (topic: string, message: any) => {
+    console.log(message);
   });
+
+  if (app.keycloak) {
+    app.use("/council", app.keycloak.protect(), councilRouter);
+  } else {
+    app.use("/council", councilRouter);
+  }
 
   return app;
 }

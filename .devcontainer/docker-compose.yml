@@ -1,18 +1,22 @@
-name: otm-home-devcontainer
+name: otm-home
 networks:
   otm-home:
     name: otm-home
     driver: bridge
-  otm-home-elk:
-    name: otm-home-elk
-    driver: bridge
 services:
-  app:
-    image: ${DOCKER_IMAGE}
-    container_name: app
+  otm-home-council:
+    build:
+      context: ..
+      dockerfile: apps/council/Dockerfile
+    container_name: otm-home-council
+    ports:
+      - "9001:9001"
     networks:
       - otm-home
-      - otm-home-elk
-    volumes:
-      - ..:/workspaces:cached
-    command: sleep infinity
+    environment:
+      OTM_HOME_COUNCIL_PORT: 9001,
+      SSL_CERT_PATH: "/usr/local/share/ca-certificates/mint/server.crt"
+      SSL_KEY_PATH: "/usr/local/share/ca-certificates/mint/server.key"
+      NODE_ENV: production
+      OLLAMA_HOST: http://otm-home-ollama:11434
+    restart: unless-stopped

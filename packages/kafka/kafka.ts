@@ -5,9 +5,19 @@ import {
   EachMessagePayload,
   KafkaConfig,
 } from "kafkajs";
+import { brokers } from "./brokers";
 import { MessageBroker } from "./MessageBroker";
 
-export class KafkaMessageBroker implements MessageBroker {
+export function useKafkaConfig(config?: KafkaConfig): KafkaConfig {
+  return {
+    brokers,
+    ssl: false,
+    clientId: "default-client",
+    ...config,
+  };
+}
+
+export class KafkaBroker implements MessageBroker {
   private kafka: Kafka;
   private producer: Producer;
   private consumer: Consumer;
@@ -55,7 +65,11 @@ export class KafkaMessageBroker implements MessageBroker {
     topic: string,
     handler: (topic: string, message: any, partition?: string) => void,
   ): Promise<void> {
-    await this.consumer.subscribe({ topic, fromBeginning: false });
+    try {
+      await this.consumer.subscribe({ topic, fromBeginning: false });
+    } catch (error) {
+      console.error("Error subscribing", error);
+    }
     await this.consumer.run({
       eachMessage: async ({
         topic,

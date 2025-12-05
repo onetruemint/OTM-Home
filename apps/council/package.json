@@ -19,7 +19,10 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@otm/kafka": "*",
+    "@otm/logger": "*",
     "@otm/ollama": "*",
+    "@otm/service": "*",
     "@otm/utils": "*",
     "express": "^5.1.0"
   }

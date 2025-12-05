@@ -1,6 +1,6 @@
-# Atomic Void Core Express Server
+# OTM Home Core Express Server
 
-A barebones Express.js application built with TypeScript for use to quickstart an Atomic Void application.
+A barebones Express.js application built with TypeScript for use to quickstart an OTM Home application.
 
 ## Features
 

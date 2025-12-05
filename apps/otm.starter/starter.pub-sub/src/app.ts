@@ -1,6 +1,7 @@
+import { KafkaBroker } from "@otm/kafka";
+import { useKafkaConfig } from "@otm/kafka/kafka";
 import { MintExpressApp, MintExpressProps, MintService } from "@otm/service";
 import { mintRouter } from "./otm.app/otm.router";
-import Express, { Router } from "express";
 
 export async function main(): Promise<MintExpressApp> {
   const appProps: MintExpressProps = {
@@ -8,6 +9,13 @@ export async function main(): Promise<MintExpressApp> {
   };
 
   const app = MintService(appProps);
+
+  const config = useKafkaConfig();
+  config.clientId = "MintApplication";
+
+  const MintApplicationKafka = new KafkaBroker(config);
+
+  app.locals.kafka = MintApplicationKafka;
 
   if (app.keycloak) {
     app.use("/starter", app.keycloak.protect(), mintRouter);

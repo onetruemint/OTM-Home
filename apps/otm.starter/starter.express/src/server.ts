@@ -1,12 +1,13 @@
-import { MintService, createHttpsServer } from "@otm/service";
+import { MintService, createExpressHttpsServer } from "@otm/service";
 import { LogLevel } from "@otm/logger";
+import { fetchEnvVar } from "@otm/utils";
 
-const HTTPS_PORT = parseInt(process.env.HTTPS_PORT || "3443");
+const HTTPS_PORT = parseInt(fetchEnvVar("EXAMPLE_PORT"));
 
 // Create MintService app with middleware
 const app = MintService({
   serviceName: "starter-app",
-  useKeycloak: process.env.KEYCLOAK_URL ? true : false,
+  useKeycloak: fetchEnvVar("KEYCLOAK_URL") ? true : false,
   logger: {
     serviceName: "starter-app",
     minLevel: LogLevel.INFO,
@@ -25,7 +26,7 @@ const app = MintService({
 // });
 
 // Create HTTPS server
-const httpsServer = createHttpsServer(app, {
+const httpsServer = createExpressHttpsServer(app, {
   serviceName: "starter-app",
   httpsPort: HTTPS_PORT,
 });

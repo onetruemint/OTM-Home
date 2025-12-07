@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { MintException } from "./otm.exception";
+import { createLogger } from "@otm/logger";
+
+const logger = createLogger({ serviceName: "error-handler" });
 
 /**
  * Global error handler middleware for Express applications
@@ -16,7 +19,11 @@ export function errorHandler(
     return res.status(error.httpStatus).json(error.toErrorResponse());
   }
 
-  console.error("Unhandled error:", error);
+  logger.error("Unhandled error", error, {
+    method: req.method,
+    url: req.url,
+    path: req.path,
+  });
 
   return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
     error: {

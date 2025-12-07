@@ -4,14 +4,15 @@ import { MintExpressApp, MintExpressProps, MintService } from "@otm/service";
 import { mintRouter } from "./otm.app/otm.router";
 
 export async function main(): Promise<MintExpressApp> {
+  const SERVICE_NAME = "MintStarter";
+
   const appProps: MintExpressProps = {
-    serviceName: "MintStarter",
+    serviceName: SERVICE_NAME,
   };
 
   const app = MintService(appProps);
 
-  const config = useKafkaConfig();
-  config.clientId = "MintApplication";
+  const config = useKafkaConfig({ clientId: SERVICE_NAME });
 
   const MintApplicationKafka = new KafkaBroker(config);
 

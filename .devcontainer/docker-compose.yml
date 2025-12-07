@@ -3,6 +3,7 @@ networks:
   otm-home:
     name: otm-home
     driver: bridge
+    external: true
 services:
   otm-home-council:
     build:

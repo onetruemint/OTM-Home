@@ -65,6 +65,9 @@ services:
             - driver: nvidia # Or 'amd' for AMD GPUs
               count: all
               capabilities: [gpu]
+        limits:
+          memory: 6G
+          cpus: "4.0"
 
   otm-home-mongodb:
     image: ${MONGO_IMAGE}
@@ -76,17 +79,19 @@ services:
       MONGO_INITDB_ROOT_USERNAME: otm-home-user
       MONGO_INITDB_ROOT_PASSWORD: otm-home-password
 
-  otm-home-kafka-ui:
-    container_name: otm-home-kafka-ui
-    image: ${KAFKA_UI_IMAGE}
-    depends_on:
-      - otm-home-kafka
+  otm-home-mongo-express:
+    image: ${MONGO_EXPRESS_IMAGE}
+    container_name: otm-home-mongo-express
+    networks:
+      - otm-home
+    restart: unless-stopped
     ports:
-      - 8081:8080
+      - 8082:8081
     environment:
-      DYNAMIC_CONFIG_ENABLED: "true"
-      KAFKA_CLUSTERS_0_NAME: wizard_test
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: otm-home-kafka:9092
+      ME_CONFIG_MONGODB_URL: mongodb://otm-home-user:otm-home-password@otm-home-mongo:27017
+      ME_CONFIG_BASICAUTH_ENABLED: true
+      ME_CONFIG_BASICAUTH_USERNAME: mint
+      ME_CONFIG_BASICAUTH_PASSWORD: pass
 
   otm-home-kafka:
     image: ${KAFKA_IMAGE}

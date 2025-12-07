@@ -1,4 +1,7 @@
 name: otm-home-raspi
+env_file:
+  - path: ./.env.raspi
+    required: true
 networks:
   otm-home-raspi:
     name: otm-home-raspi

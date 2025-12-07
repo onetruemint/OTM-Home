@@ -1,13 +1,17 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 
-export async function appendFileSync(file: string, data: string) {
-  fs.appendFileSync(file, data + "\n");
+/**
+ * Memory optimization: Using async file operations to prevent blocking event loop
+ */
+
+export async function appendFileSync(file: string, data: string): Promise<void> {
+  await fs.appendFile(file, data + "\n", "utf8");
 }
 
 export async function createDirectoriesSync(path: string): Promise<void> {
-  fs.mkdirSync(path, { recursive: true });
+  await fs.mkdir(path, { recursive: true });
 }
 
-export async function readFileSync(file: string) {
-  return fs.readFileSync(file, "utf8");
+export async function readFileSync(file: string): Promise<string> {
+  return await fs.readFile(file, "utf8");
 }

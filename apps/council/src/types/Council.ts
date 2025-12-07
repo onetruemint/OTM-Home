@@ -25,13 +25,14 @@ export enum CouncilStatus {
   EVALUATING = "EVALUATING",
 }
 
-export interface CouncilInterface {
-  logger: Logger;
-  councilKafka: KafkaBroker;
-  members: OllamaClient[];
-  elites: OllamaClient[];
-  status: CouncilStatus;
+export enum PromptStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  COMPLETED = "COMPLETED",
+  CACHED = "CACHED", // For deduplicated prompts
+}
 
-  runCouncil(): Promise<void>;
-  addToQueue(prompt: string): Promise<string>;
+export enum CouncilEmits {
+  NEW_PROMPT,
+  PROMPT_STATUS_CHANGED,
 }

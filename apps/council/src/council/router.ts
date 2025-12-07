@@ -3,8 +3,10 @@ import {
   getHealth,
   getMembers,
   getElites,
-  addToQueue,
   getStatus,
+  getAllPrompts,
+  getPromptsByStatus,
+  getPromptById,
 } from "./controller";
 
 export function councilRouter(): Router {
@@ -12,12 +14,15 @@ export function councilRouter(): Router {
 
   router.get("/health", getHealth);
 
-  router.post("/vote", addToQueue);
-
   router.get("/status", getStatus);
   router.get("/members", getMembers);
 
   router.get("/elites", getElites);
+
+  // Prompt status endpoints
+  router.get("/prompts", getAllPrompts);
+  router.get("/prompts/status/:status", getPromptsByStatus);
+  router.get("/prompts/:id", getPromptById);
 
   return router;
 }

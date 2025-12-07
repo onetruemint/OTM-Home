@@ -1,7 +1,4 @@
 name: otm-home-raspi
-env_file:
-  - path: ./.env.raspi
-    required: true
 networks:
   otm-home-raspi:
     name: otm-home-raspi
@@ -12,7 +9,7 @@ services:
       context: ..
       dockerfile: apps/portal/Dockerfile.monorepo
       platforms:
-        - ${DOCKER_PLATFORM}
+        - linux/arm/v7
     container_name: otm-home-portal
     ports:
       - "9000:9000"

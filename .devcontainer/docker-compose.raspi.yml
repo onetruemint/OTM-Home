@@ -9,7 +9,7 @@ services:
       context: ..
       dockerfile: apps/portal/Dockerfile.monorepo
       platforms:
-        - ${DOCKER_PLATFORM:-linux/amd64}
+        - ${DOCKER_PLATFORM}
     container_name: otm-home-portal
     ports:
       - "9000:9000"

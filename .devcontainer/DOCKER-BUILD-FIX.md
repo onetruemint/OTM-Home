@@ -112,6 +112,22 @@ Ensure your Raspberry Pi has at least 2GB RAM (4GB recommended).
 
 ## Troubleshooting
 
+### Build fails with "addgroup: exit code 255"
+This was fixed in the latest `Dockerfile.monorepo`. The issue occurred because Alpine Linux's `addgroup --system --gid` syntax is incompatible with ARM architectures.
+
+**Solution**: Pull the latest code or manually update the Dockerfile:
+```dockerfile
+# Old (broken on ARM)
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# New (works on both x86 and ARM)
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S -u 1001 -G nodejs nextjs
+```
+
+See `RASPBERRY-PI-TROUBLESHOOTING.md` for more details.
+
 ### Build fails with "File not found"
 Make sure you're running the build from the project root:
 ```bash

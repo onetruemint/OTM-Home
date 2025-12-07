@@ -69,6 +69,20 @@ docker-compose -f docker-compose.raspi.yml ps
 
 ## Troubleshooting
 
+### Build error: "addgroup failed with exit code 255"
+
+This has been fixed in the latest `Dockerfile.monorepo`. If you still see this:
+
+```bash
+# Pull latest changes
+git pull
+
+# Rebuild without cache
+docker-compose -f docker-compose.raspi.yml build --no-cache otm-home-portal
+```
+
+See `RASPBERRY-PI-TROUBLESHOOTING.md` for detailed fix.
+
 ### Cannot connect to MongoDB
 
 ```bash
@@ -92,6 +106,15 @@ docker logs otm-home-portal
 # 2. Backend server IP is not reachable
 # 3. Ports are not accessible (firewall)
 ```
+
+### Platform mismatch error
+
+```bash
+# Set the correct platform in .env.raspi
+DOCKER_PLATFORM=linux/arm64  # For 64-bit Raspberry Pi OS
+```
+
+See `PLATFORM-FIX-QUICK-REF.md` for details.
 
 ## Configuration Files
 

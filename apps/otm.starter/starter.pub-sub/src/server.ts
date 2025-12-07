@@ -1,7 +1,8 @@
 import { MintService, createExpressHttpsServer } from "@otm/service";
-import { LogLevel } from "@otm/logger";
+import { LogLevel, createLogger } from "@otm/logger";
 import { fetchEnvVar } from "@otm/utils";
 
+const logger = createLogger({ serviceName: "starter-pub-sub-server" });
 const HTTPS_PORT = parseInt(fetchEnvVar("EXAMPLE_PORT"));
 
 // Create MintService app with middleware
@@ -33,27 +34,25 @@ const httpsServer = createExpressHttpsServer(app, {
 
 // Start HTTPS server
 httpsServer.listen(HTTPS_PORT, () => {
-  console.log(`🚀 HTTPS Server is running on port ${HTTPS_PORT}`);
-  console.log(
-    `📱 Health check available at https://localhost:${HTTPS_PORT}/health`,
-  );
-  console.log(`🏠 Home page at https://localhost:${HTTPS_PORT}/`);
-  console.log(`🔒 SSL/TLS enabled`);
+  logger.info(`HTTPS Server is running on port ${HTTPS_PORT}`, { port: HTTPS_PORT });
+  logger.info(`Health check available at https://localhost:${HTTPS_PORT}/health`);
+  logger.info(`Home page at https://localhost:${HTTPS_PORT}/`);
+  logger.info(`SSL/TLS enabled`);
 });
 
 // Graceful shutdown
 process.on("SIGTERM", () => {
-  console.log("SIGTERM received, shutting down gracefully");
+  logger.info("SIGTERM received, shutting down gracefully");
   httpsServer.close(() => {
-    console.log("Server closed");
+    logger.info("Server closed");
     process.exit(0);
   });
 });
 
 process.on("SIGINT", () => {
-  console.log("SIGINT received, shutting down gracefully");
+  logger.info("SIGINT received, shutting down gracefully");
   httpsServer.close(() => {
-    console.log("Server closed");
+    logger.info("Server closed");
     process.exit(0);
   });
 });

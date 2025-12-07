@@ -1,4 +1,5 @@
 import { fetchEnvVar } from "@otm/utils";
+import { createLogger } from "@otm/logger";
 import {
   OllamaCreateModelOptions,
   OllamaBasicResponse,
@@ -9,6 +10,8 @@ import {
   OllamaTagResponse,
   OllamaPullModelOptions,
 } from "./types/Ollama";
+
+const logger = createLogger({ serviceName: "ollama-client" });
 
 /**
  * Client for interacting with the Ollama API.
@@ -101,7 +104,7 @@ export default class Ollama implements OllamaClient {
 
       return (await res.json()) as unknown as OllamaBasicResponse;
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error creating model", error as Error);
       throw error;
     }
   }
@@ -117,7 +120,7 @@ export default class Ollama implements OllamaClient {
         body: JSON.stringify({ model }),
       });
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error deleting model", error as Error, { model });
       throw error;
     }
   }
@@ -143,7 +146,7 @@ export default class Ollama implements OllamaClient {
 
       return (await res.json()) as unknown as OllamaBasicResponse;
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error pulling model", error as Error, { model: options.model });
       throw error;
     }
   }

@@ -4,6 +4,8 @@ ARG NODE_VERSION=24.11.1
 FROM node:${NODE_VERSION}-alpine AS base
 ENV NODE_OPTIONS --use-openssl-ca
 
+USER root
+
 # Install dependencies for the entire monorepo
 FROM base AS deps
 RUN apk update

@@ -5,7 +5,8 @@
       "Bash(npx tsc:*)",
       "Bash(test:*)",
       "Bash(yarn workspace:*)",
-      "Bash(yarn workspaces:*)"
+      "Bash(yarn workspaces:*)",
+      "Bash(docker-compose:*)"
     ],
     "deny": [],
     "ask": []

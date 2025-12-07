@@ -7,7 +7,7 @@ services:
   otm-home-portal:
     build:
       context: ..
-      dockerfile: apps/portal/Dockerfile
+      dockerfile: apps/portal/Dockerfile.monorepo
     container_name: otm-home-portal
     ports:
       - "9000:9000"
@@ -15,7 +15,6 @@ services:
       - otm-home-raspi
     environment:
       # Backend server configuration - set these to your backend server's IP/hostname
-      MONGO_URL: ${BACKEND_MONGO_URL:-mongodb://otm-home-user:otm-home-password@BACKEND_SERVER_IP:27017}
       KAFKA_BROKERS: ${BACKEND_KAFKA_BROKERS:-BACKEND_SERVER_IP:9092}
       NODE_ENV: production
       PORT: 9000

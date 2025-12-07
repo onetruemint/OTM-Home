@@ -13,11 +13,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "./scripts/gen-certs.sh && turbo run build",
+    "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "certs": "./scripts/gen-certs.sh"
   },
   "devDependencies": {
     "prettier": "^3.2.5",

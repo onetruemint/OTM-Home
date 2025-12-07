@@ -1,11 +1,11 @@
 # Raspberry Pi Deployment Guide
 
-This guide explains how to deploy the portal and mongo-express services on a Raspberry Pi (or any separate server) while keeping the backend services (MongoDB, Kafka, etc.) on your main server.
+This guide explains how to deploy the portal service on a Raspberry Pi (or any separate server) while keeping the backend services (Kafka, etc.) on your main server.
 
 ## Architecture
 
-- **Backend Server**: Runs MongoDB, Kafka, Ollama, Keycloak, and other backend services
-- **Raspberry Pi**: Runs Portal (Next.js frontend) and Mongo Express (database viewer)
+- **Backend Server**: Runs Kafka, Ollama, Keycloak, and other backend services
+- **Raspberry Pi**: Runs Portal (Next.js frontend)
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ docker-compose -f .devcontainer/docker-compose.backend.yml up -d
 ```
 
 **Important**: Ensure these ports are accessible from the Raspberry Pi:
-- MongoDB: `27017`
+
 - Kafka: `9092`
 
 You may need to configure your firewall to allow access from the Raspberry Pi's IP address.
@@ -68,7 +68,6 @@ docker-compose -f docker-compose.raspi.yml --env-file .env.raspi up -d
 After both servers are running:
 
 - **Portal**: http://RASPI_IP:9000
-- **Mongo Express**: http://RASPI_IP:8082
 
 Replace `RASPI_IP` with your Raspberry Pi's IP address (e.g., `192.168.1.150`).
 
@@ -80,7 +79,6 @@ If you're using a firewall on the backend server, you'll need to allow traffic f
 
 ```bash
 # Example using ufw (Ubuntu/Debian)
-sudo ufw allow from RASPI_IP to any port 27017 proto tcp  # MongoDB
 sudo ufw allow from RASPI_IP to any port 9092 proto tcp   # Kafka
 ```
 
@@ -90,20 +88,8 @@ If you want to access the services from outside your local network:
 
 1. Configure port forwarding on your router:
    - Forward port 9000 to Raspberry Pi's port 9000 (Portal)
-   - Forward port 8082 to Raspberry Pi's port 8082 (Mongo Express)
 
 ## Troubleshooting
-
-### Portal cannot connect to MongoDB
-
-1. Verify backend server's IP address in `.env.raspi`
-2. Check if MongoDB port 27017 is accessible:
-   ```bash
-   # From Raspberry Pi
-   nc -zv BACKEND_SERVER_IP 27017
-   ```
-3. Check firewall rules on backend server
-4. Check MongoDB is listening on all interfaces (not just localhost)
 
 ### Portal cannot connect to Kafka
 

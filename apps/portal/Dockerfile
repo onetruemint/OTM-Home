@@ -1,11 +1,15 @@
 # syntax=docker.io/docker/dockerfile:1
+ARG NODE_VERSION=24.11.1
 
-FROM node:20-alpine AS base
+FROM node:${NODE_VERSION}-alpine AS base
+
+ENV NODE_OPTIONS --use-openssl-ca
 
 # Install dependencies only when needed
 FROM base AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+RUN apk update
+RUN apk add --no-cache libc6-compat openssl ca-certificates
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager

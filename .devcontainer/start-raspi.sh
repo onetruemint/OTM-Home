@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Start script for Raspberry Pi deployment
-# This script starts the portal and mongo-express services
+# This script starts the portal services
 
 set -e
 
@@ -51,21 +51,11 @@ fi
 echo ""
 echo "Configuration:"
 echo "  Backend Server: $BACKEND_SERVER_IP"
-echo "  MongoDB URL: $BACKEND_MONGO_URL"
 echo "  Kafka Brokers: $BACKEND_KAFKA_BROKERS"
 echo ""
 
 # Test connectivity to backend services
 echo "Testing connectivity to backend services..."
-
-# Test MongoDB
-echo -n "  MongoDB (27017)... "
-if nc -z -w2 "$BACKEND_SERVER_IP" 27017 2>/dev/null; then
-    echo -e "${GREEN}OK${NC}"
-else
-    echo -e "${RED}FAILED${NC}"
-    echo -e "${YELLOW}Warning: Cannot connect to MongoDB. Services may not work properly.${NC}"
-fi
 
 # Test Kafka
 echo -n "  Kafka (9092)... "
@@ -89,7 +79,6 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "Access the services at:"
     echo "  Portal:        http://$(hostname -I | awk '{print $1}'):9000"
-    echo "  Mongo Express: http://$(hostname -I | awk '{print $1}'):8082"
     echo ""
     echo "View logs with:"
     echo "  docker-compose -f ${SCRIPT_DIR}/docker-compose.raspi.yml logs -f"

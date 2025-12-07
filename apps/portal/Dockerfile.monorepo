@@ -49,9 +49,11 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Create user and group (compatible with both x86 and ARM)
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S -u 1001 -G nodejs nextjs
+# Create user and group (ARM-compatible approach)
+# Install shadow package for more robust user management
+RUN apk add --no-cache shadow && \
+    groupadd -g 1001 nodejs && \
+    useradd -r -u 1001 -g nodejs nextjs
 
 # Copy public assets
 COPY --from=builder /app/apps/portal/public ./public

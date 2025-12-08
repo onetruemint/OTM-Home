@@ -6,7 +6,8 @@
       "Bash(test:*)",
       "Bash(yarn workspace:*)",
       "Bash(yarn workspaces:*)",
-      "Bash(docker-compose:*)"
+      "Bash(docker-compose:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

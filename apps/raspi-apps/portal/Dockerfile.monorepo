@@ -1,15 +1,17 @@
 # syntax=docker.io/docker/dockerfile:1
 ARG NODE_VERSION=22.21.1
 
-FROM node:${NODE_VERSION}-alpine AS base
+FROM node:${NODE_VERSION}-slim AS base
 ENV NODE_OPTIONS --use-openssl-ca
 
 USER root
 
 # Install dependencies for the entire monorepo
 FROM base AS deps
-RUN apk update
-RUN apk add --no-cache libc6-compat openssl ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy workspace files
@@ -51,8 +53,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 -g nodejs nextjs
+RUN groupadd --gid 1001 nodejs && \
+    useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nextjs
 
 # Copy public assets
 COPY --from=builder /app/apps/portal/public ./public

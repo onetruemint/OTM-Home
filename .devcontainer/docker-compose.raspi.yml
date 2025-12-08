@@ -7,7 +7,7 @@ services:
   otm-home-portal:
     build:
       context: ..
-      dockerfile: apps/portal/Dockerfile
+      dockerfile: apps/raspi-apps/portal/Dockerfile
       platforms:
         - linux/arm/v7
     container_name: otm-home-portal

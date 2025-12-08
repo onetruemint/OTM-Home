@@ -1,20 +1,22 @@
 # syntax=docker.io/docker/dockerfile:1
 ARG NODE_VERSION=22.21.1
 
-FROM node:${NODE_VERSION}-alpine AS base
+FROM node:${NODE_VERSION}-slim AS base
 ENV NODE_OPTIONS --use-openssl-ca
 
 USER root
 
 # Install dependencies for the entire monorepo
 FROM base AS deps
-RUN apk update
-RUN apk add --no-cache libc6-compat openssl ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy workspace files
 COPY package.json yarn.lock turbo.json ./
-COPY apps/portal/package.json ./apps/portal/package.json
+COPY apps/raspi-apps/portal/package.json ./apps/raspi-apps/portal/package.json
 COPY packages/kafka/package.json ./packages/kafka/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
@@ -28,13 +30,13 @@ WORKDIR /app
 
 # Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/portal/node_modules ./apps/portal/node_modules
+COPY --from=deps /app/apps/raspi-apps/portal/node_modules ./apps/raspi-apps/portal/node_modules
 
 # Copy workspace configuration
 COPY package.json yarn.lock turbo.json ./
 
 # Copy portal source code
-COPY apps/portal ./apps/portal
+COPY apps/raspi-apps/portal ./apps/raspi-apps/portal
 
 # Copy dependencies that portal needs
 COPY packages/kafka ./packages/kafka
@@ -42,7 +44,7 @@ COPY packages/logger ./packages/logger
 COPY packages/typescript-config ./packages/typescript-config
 
 # Build only the portal (bypass turbo due to wasm bindings limitation on ARM)
-WORKDIR /app/apps/portal
+WORKDIR /app/apps/raspi-apps/portal
 RUN npx next build
 
 # Production image
@@ -51,15 +53,15 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 -g nodejs nextjs
+RUN groupadd --gid 1001 nodejs && \
+    useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nextjs
 
 # Copy public assets
-COPY --from=builder /app/apps/portal/public ./public
+COPY --from=builder /app/apps/raspi-apps/portal/public ./public
 
 # Copy standalone build output
-COPY --from=builder --chown=nextjs:nodejs /app/apps/portal/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/portal/.next/static ./apps/portal/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/raspi-apps/portal/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/raspi-apps/portal/.next/static ./apps/raspi-apps/portal/.next/static
 
 USER nextjs
 
@@ -67,5 +69,3 @@ EXPOSE 9000
 ENV PORT=9000
 ENV HOSTNAME="0.0.0.0"
 
-# The standalone server is located in the apps/portal directory
-CMD ["node", "apps/portal/server.js"]

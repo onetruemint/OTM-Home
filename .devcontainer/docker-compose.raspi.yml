@@ -5,6 +5,8 @@ networks:
     driver: bridge
 services:
   otm-home-portal:
+    env_file:
+      - .env.raspi
     image: ${RASPI_PORTAL_IMAGE}
     container_name: otm-home-portal
     ports:

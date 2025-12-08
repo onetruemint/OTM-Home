@@ -11,13 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Setup SSL certificates in base stage so all stages inherit them
-RUN yarn certs
-ENV SELF_SIGNED_CERTS="/usr/local/share/ca-certificates/mint"
-COPY .devcontainer/certs/server.crt ${SELF_SIGNED_CERTS}/mint.crt
-RUN update-ca-certificates --verbose && \
-    chmod 644 ${SELF_SIGNED_CERTS}/mint.crt
-
 # Configure Node to use the custom certificate - this will be inherited by all stages
 ENV NODE_EXTRA_CA_CERTS="${SELF_SIGNED_CERTS}/mint.crt"
 ENV NODE_OPTIONS="--use-openssl-ca"
@@ -27,11 +20,19 @@ FROM base AS deps
 WORKDIR /app
 
 # Copy workspace files
+COPY script/gen-certs.sh ./scripts/gen-certs.sh
 COPY package.json yarn.lock turbo.json ./
 COPY apps/raspi-apps/portal/package.json ./apps/raspi-apps/portal/package.json
 COPY packages/kafka/package.json ./packages/kafka/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
+
+# Setup SSL certificates in base stage so all stages inherit them
+RUN yarn certs
+ENV SELF_SIGNED_CERTS="/usr/local/share/ca-certificates/mint"
+COPY .devcontainer/certs/server.crt ${SELF_SIGNED_CERTS}/mint.crt
+RUN update-ca-certificates --verbose && \
+    chmod 644 ${SELF_SIGNED_CERTS}/mint.crt
 
 # Install all dependencies (including dev dependencies for build)
 RUN yarn install --frozen-lockfile --network-timeout 1000000

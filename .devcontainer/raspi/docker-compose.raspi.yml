@@ -6,8 +6,13 @@ networks:
 services:
   otm-home-portal:
     env_file:
-      - .env.raspi
-    image: ${RASPI_PORTAL_IMAGE}
+      - ../.env.raspi
+    build:
+      context: ../..
+      dockerfile: apps/raspi-apps/portal/Dockerfile
+      platforms:
+        - linux/arm64
+    image: ${RASPI_PORTAL_IMAGE:-otm-home-portal:latest}
     container_name: otm-home-portal
     ports:
       - "9000:9000"

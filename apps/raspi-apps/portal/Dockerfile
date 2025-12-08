@@ -54,9 +54,9 @@ COPY packages/kafka ./packages/kafka
 COPY packages/logger ./packages/logger
 COPY packages/typescript-config ./packages/typescript-config
 
-# Build only the portal (bypass turbo due to wasm bindings limitation on ARM)
+# Build only the portal
 WORKDIR /app/apps/raspi-apps/portal
-RUN npx next build
+RUN yarn build
 
 # Production image
 FROM base AS runner

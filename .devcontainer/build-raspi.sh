@@ -59,7 +59,7 @@ echo ""
 # Build the portal image
 docker buildx build \
     --platform "$PLATFORM" \
-    --file "${SCRIPT_DIR}/../apps/portal/Dockerfile.monorepo" \
+    --file "${SCRIPT_DIR}/../apps/raspi-apps/portal/Dockerfile.monorepo" \
     --tag otm-home-portal:latest \
     --load \
     "${SCRIPT_DIR}/.."

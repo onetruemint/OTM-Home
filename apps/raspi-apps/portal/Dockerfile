@@ -2,7 +2,7 @@
 ARG NODE_VERSION=22.21.1
 
 FROM node:${NODE_VERSION}-slim AS base
-ENV NODE_OPTIONS --use-openssl-ca
+ENV NODE_OPTIONS="--use-openssl-ca"
 
 USER root
 
@@ -18,8 +18,6 @@ WORKDIR /app
 COPY package.json yarn.lock turbo.json ./
 COPY apps/raspi-apps/portal/package.json ./apps/raspi-apps/portal/package.json
 COPY packages/kafka/package.json ./packages/kafka/package.json
-COPY packages/logger/package.json ./packages/logger/package.json
-COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 
 # Install all dependencies (including dev dependencies for build)
 RUN yarn install --frozen-lockfile --network-timeout 1000000
@@ -40,8 +38,6 @@ COPY apps/raspi-apps/portal ./apps/raspi-apps/portal
 
 # Copy dependencies that portal needs
 COPY packages/kafka ./packages/kafka
-COPY packages/logger ./packages/logger
-COPY packages/typescript-config ./packages/typescript-config
 
 # Build only the portal (bypass turbo due to wasm bindings limitation on ARM)
 WORKDIR /app/apps/raspi-apps/portal
@@ -69,3 +65,5 @@ EXPOSE 9000
 ENV PORT=9000
 ENV HOSTNAME="0.0.0.0"
 
+# The standalone server is located in the apps/raspi-apps/portal directory
+CMD ["node", "apps/raspi-apps/portal/server.js"]

@@ -41,9 +41,9 @@ COPY packages/kafka ./packages/kafka
 COPY packages/logger ./packages/logger
 COPY packages/typescript-config ./packages/typescript-config
 
-# Build only the portal
+# Build only the portal (bypass turbo due to wasm bindings limitation on ARM)
 WORKDIR /app/apps/portal
-RUN yarn build
+RUN npx next build
 
 # Production image
 FROM base AS runner

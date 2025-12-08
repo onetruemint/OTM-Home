@@ -90,6 +90,7 @@ COPY --from=installer /app/apps/council/dist/packages ./packages
 
 # # Install production dependencies (this will create symlinks to compiled packages)
 RUN yarn install --frozen-lockfile --production
+RUN yarn run certs
 
 # Run as non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \

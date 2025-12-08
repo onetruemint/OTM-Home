@@ -28,6 +28,13 @@ RUN yarn install --frozen-lockfile
 FROM base AS builder
 WORKDIR /app
 
+RUN yarn run certs
+
+ENV SELF_SIGNED_CERTS "/usr/local/share/ca-certificates/mint"
+COPY .devcontainer/certs ${SELF_SIGNED_CERTS}
+RUN update-ca-certificates --verbose
+RUN chmod 777 -R ${SELF_SIGNED_CERTS}
+
 # Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/raspi-apps/portal/node_modules ./apps/raspi-apps/portal/node_modules

@@ -2,22 +2,35 @@
 ARG NODE_VERSION=22.21.1
 
 FROM node:${NODE_VERSION}-slim AS base
-ENV NODE_OPTIONS="--use-openssl-ca"
 
 USER root
 
-# Install dependencies for the entire monorepo
-FROM base AS deps
+# Install ca-certificates in base stage
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Setup SSL certificates in base stage so all stages inherit them
+ENV SELF_SIGNED_CERTS="/usr/local/share/ca-certificates/mint"
+COPY .devcontainer/certs/server.crt ${SELF_SIGNED_CERTS}/mint.crt
+RUN update-ca-certificates --verbose && \
+    chmod 644 ${SELF_SIGNED_CERTS}/mint.crt
+
+# Configure Node to use the custom certificate - this will be inherited by all stages
+ENV NODE_EXTRA_CA_CERTS="${SELF_SIGNED_CERTS}/mint.crt"
+ENV NODE_OPTIONS="--use-openssl-ca"
+
+# Install dependencies for the entire monorepo
+FROM base AS deps
 WORKDIR /app
 
 # Copy workspace files
 COPY package.json yarn.lock turbo.json ./
 COPY apps/raspi-apps/portal/package.json ./apps/raspi-apps/portal/package.json
 COPY packages/kafka/package.json ./packages/kafka/package.json
+COPY packages/logger/package.json ./packages/logger/package.json
+COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 
 # Install all dependencies (including dev dependencies for build)
 RUN yarn install --frozen-lockfile --network-timeout 1000000
@@ -38,6 +51,8 @@ COPY apps/raspi-apps/portal ./apps/raspi-apps/portal
 
 # Copy dependencies that portal needs
 COPY packages/kafka ./packages/kafka
+COPY packages/logger ./packages/logger
+COPY packages/typescript-config ./packages/typescript-config
 
 # Build only the portal (bypass turbo due to wasm bindings limitation on ARM)
 WORKDIR /app/apps/raspi-apps/portal

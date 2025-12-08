@@ -11,10 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure Node to use the custom certificate - this will be inherited by all stages
-ENV NODE_EXTRA_CA_CERTS="${SELF_SIGNED_CERTS}/mint.crt"
-ENV NODE_OPTIONS="--use-openssl-ca"
-
 # Install dependencies for the entire monorepo
 FROM base AS deps
 WORKDIR /app
@@ -33,6 +29,10 @@ ENV SELF_SIGNED_CERTS="/usr/local/share/ca-certificates/mint"
 COPY .devcontainer/certs/server.crt ${SELF_SIGNED_CERTS}/mint.crt
 RUN update-ca-certificates --verbose && \
     chmod 644 ${SELF_SIGNED_CERTS}/mint.crt
+
+# Configure Node to use the custom certificate - this will be inherited by all stages
+ENV NODE_EXTRA_CA_CERTS="${SELF_SIGNED_CERTS}/mint.crt"
+ENV NODE_OPTIONS="--use-openssl-ca"
 
 # Install all dependencies (including dev dependencies for build)
 RUN yarn install --frozen-lockfile --network-timeout 1000000

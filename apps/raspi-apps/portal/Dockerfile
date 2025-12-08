@@ -20,7 +20,7 @@ FROM base AS deps
 WORKDIR /app
 
 # Copy workspace files
-COPY script/gen-certs.sh ./scripts/gen-certs.sh
+COPY scripts/gen-certs.sh ./scripts/gen-certs.sh
 COPY package.json yarn.lock turbo.json ./
 COPY apps/raspi-apps/portal/package.json ./apps/raspi-apps/portal/package.json
 COPY packages/kafka/package.json ./packages/kafka/package.json

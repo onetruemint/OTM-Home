@@ -1,4 +1,4 @@
-name: otm-home-raspi
+ame: otm-home-raspi
 networks:
   otm-home-raspi:
     name: otm-home-raspi
@@ -7,7 +7,7 @@ services:
   otm-home-portal:
     build:
       context: ..
-      dockerfile: apps/raspi-apps/raspi-apps/portal/Dockerfile
+      dockerfile: apps/raspi-apps/portal/Dockerfile
       platforms:
         - linux/arm/v7
     container_name: otm-home-portal

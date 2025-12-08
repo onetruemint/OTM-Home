@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Setup SSL certificates in base stage so all stages inherit them
+RUN yarn certs
 ENV SELF_SIGNED_CERTS="/usr/local/share/ca-certificates/mint"
 COPY .devcontainer/certs/server.crt ${SELF_SIGNED_CERTS}/mint.crt
 RUN update-ca-certificates --verbose && \

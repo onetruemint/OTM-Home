@@ -1,4 +1,4 @@
-ame: otm-home-raspi
+name: otm-home-raspi
 networks:
   otm-home-raspi:
     name: otm-home-raspi

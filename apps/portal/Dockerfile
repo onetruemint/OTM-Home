@@ -1,70 +1,71 @@
 # syntax=docker.io/docker/dockerfile:1
-ARG NODE_VERSION=24.11.1
+ARG NODE_VERSION=22.21.1
 
 FROM node:${NODE_VERSION}-alpine AS base
-
 ENV NODE_OPTIONS --use-openssl-ca
 
-# Install dependencies only when needed
+USER root
+
+# Install dependencies for the entire monorepo
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk update
 RUN apk add --no-cache libc6-compat openssl ca-certificates
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+# Copy workspace files
+COPY package.json yarn.lock turbo.json ./
+COPY apps/portal/package.json ./apps/portal/package.json
+COPY packages/kafka/package.json ./packages/kafka/package.json
+COPY packages/logger/package.json ./packages/logger/package.json
+COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 
+# Install all dependencies (including dev dependencies for build)
+RUN yarn install --frozen-lockfile
 
-# Rebuild the source code only when needed
+# Build stage - only build what's needed for portal
 FROM base AS builder
 WORKDIR /app
+
+# Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY --from=deps /app/apps/portal/node_modules ./apps/portal/node_modules
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED=1
+# Copy workspace configuration
+COPY package.json yarn.lock turbo.json ./
 
-RUN \
-  if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+# Copy portal source code
+COPY apps/portal ./apps/portal
 
-# Production image, copy all the files and run next
+# Copy dependencies that portal needs
+COPY packages/kafka ./packages/kafka
+COPY packages/logger ./packages/logger
+COPY packages/typescript-config ./packages/typescript-config
+
+# Build only the portal (bypass turbo due to wasm bindings limitation on ARM)
+WORKDIR /app/apps/portal
+RUN npx next build
+
+# Production image
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-# Uncomment the following line in case you want to disable telemetry during runtime.
-# ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN adduser --system --uid 1001 -g nodejs nextjs
 
-COPY --from=builder /app/public ./public
+# Copy public assets
+COPY --from=builder /app/apps/portal/public ./public
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy standalone build output
+COPY --from=builder --chown=nextjs:nodejs /app/apps/portal/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/portal/.next/static ./apps/portal/.next/static
 
 USER nextjs
 
 EXPOSE 9000
-
 ENV PORT=9000
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
 ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+
+# The standalone server is located in the apps/portal directory
+CMD ["node", "apps/portal/server.js"]

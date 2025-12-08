@@ -22,7 +22,7 @@ COPY packages/logger/package.json ./packages/logger/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 
 # Install all dependencies (including dev dependencies for build)
-RUN yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile --network-timeout 1000000
 
 # Build stage - only build what's needed for portal
 FROM base AS builder

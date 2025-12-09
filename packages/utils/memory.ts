@@ -22,6 +22,11 @@ export interface MemoryThresholds {
   rssCritical: number; // RSS critical threshold in MB
 }
 
+export enum MEMORY_LIMITS {
+  IN_BOUNDS,
+  OUT_OF_BOUNDS,
+}
+
 const DEFAULT_THRESHOLDS: MemoryThresholds = {
   heapUsedWarning: 400, // 400 MB
   heapUsedCritical: 700, // 700 MB
@@ -88,7 +93,7 @@ export function logMemoryUsage(prefix = ""): void {
  * Check memory thresholds and log warnings
  */
 export function checkMemoryThresholds(
-  thresholds: MemoryThresholds = DEFAULT_THRESHOLDS
+  thresholds: MemoryThresholds = DEFAULT_THRESHOLDS,
 ): { withinLimits: boolean; warnings: string[] } {
   const stats = getMemoryStats();
   const warnings: string[] = [];
@@ -141,7 +146,7 @@ export function checkMemoryThresholds(
  */
 export function startMemoryMonitoring(
   intervalMs = 60000, // 1 minute default
-  thresholds: MemoryThresholds = DEFAULT_THRESHOLDS
+  thresholds: MemoryThresholds = DEFAULT_THRESHOLDS,
 ): NodeJS.Timeout {
   logger.info("Starting memory monitoring", { interval_ms: intervalMs });
 

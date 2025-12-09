@@ -1,6 +1,6 @@
 import { OllamaClient } from "@otm/ollama";
 import { CouncilDiscussion } from "../types/Council";
-import * as consts from "../consts";
+import * as consts from "./consts";
 import { createLogger } from "@otm/logger";
 
 const logger = createLogger({ serviceName: "council-compute" });
@@ -12,7 +12,10 @@ function truncateResponse(response: string): string {
   if (response.length > consts.MAX_AI_RESPONSE_LENGTH) {
     logger.warn(
       `Response length (${response.length}) exceeds maximum (${consts.MAX_AI_RESPONSE_LENGTH}). Truncating.`,
-      { responseLength: response.length, maxLength: consts.MAX_AI_RESPONSE_LENGTH }
+      {
+        responseLength: response.length,
+        maxLength: consts.MAX_AI_RESPONSE_LENGTH,
+      },
     );
     return response.substring(0, consts.MAX_AI_RESPONSE_LENGTH) + "...";
   }
@@ -20,7 +23,10 @@ function truncateResponse(response: string): string {
   if (response.length > consts.RESPONSE_WARNING_LENGTH) {
     logger.warn(
       `Response length (${response.length}) approaching maximum (${consts.MAX_AI_RESPONSE_LENGTH})`,
-      { responseLength: response.length, maxLength: consts.MAX_AI_RESPONSE_LENGTH }
+      {
+        responseLength: response.length,
+        maxLength: consts.MAX_AI_RESPONSE_LENGTH,
+      },
     );
   }
 

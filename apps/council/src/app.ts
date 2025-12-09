@@ -2,27 +2,26 @@ import { Express } from "express";
 import { councilRouter } from "./council/router";
 import { MintExpressProps, MintService } from "@otm/service";
 import Council from "./council/Council";
-import * as consts from "./consts";
-import { getCouncilKafka } from "./messaging/councilKafka";
+import * as consts from "./council/consts";
+import { getCouncilKafka, getHandler } from "./messaging/councilKafka";
 import { topics } from "@otm/kafka";
 import {
-  IncomingCouncilMessage,
   ResponseSavedMessage,
   PromptStatusChangedMessage,
 } from "./messaging/CouncilTopics";
-import { PromptStatus } from "./types/Council";
+import { PromptStatus, type QueuedPrompt } from "./types/Council";
 import { EventEmitter } from "stream";
 import { CouncilStorage } from "./storage/CouncilStorage";
 import { CouncilEmits } from "./types/Council";
 import {
-  ONE_SECOND,
   startMemoryMonitoring,
   logMemoryUsage,
-  checkMemoryThresholds,
   getMemoryStats,
-  bytesToMB
+  bytesToMB,
+  MEMORY_LIMITS,
 } from "@otm/utils";
 import { createLogger } from "@otm/logger";
+import { checkMemory } from "./council/utils";
 
 const logger = createLogger({ serviceName: "council-app" });
 
@@ -37,64 +36,18 @@ export async function createCouncilApp(): Promise<Express> {
 
   app.locals.council = council;
 
-  interface QueuedPrompt {
-    id: string;
-    prompt: string;
-    discussionTimeMs?: number;
-  }
-
   let promptQueue: QueuedPrompt[] = [];
   let councilEmitter = new EventEmitter();
   let droppedPrompts = 0;
 
-  async function newPromptHandler(_: string, message: IncomingCouncilMessage) {
-    logger.info("Received message", { prompt: message.prompt });
-
-    // Check queue size limit
-    if (promptQueue.length >= consts.MAX_QUEUE_SIZE) {
-      droppedPrompts++;
-      logger.warn("Queue is full, dropping prompt", {
-        queueSize: promptQueue.length,
-        maxSize: consts.MAX_QUEUE_SIZE,
-        totalDropped: droppedPrompts,
-      });
-      return;
-    }
-
-    // Warn if approaching limit
-    if (promptQueue.length >= consts.QUEUE_WARNING_THRESHOLD) {
-      logger.warn("Queue approaching capacity", {
-        queueSize: promptQueue.length,
-        maxSize: consts.MAX_QUEUE_SIZE,
-        percentFull: Math.round((promptQueue.length / consts.MAX_QUEUE_SIZE) * 100),
-      });
-    }
-
-    // Save prompt to database with PENDING status
-    const storage = await CouncilStorage.getInstance();
-    const promptId = await storage.createPrompt(message.prompt, message.discussionTimeMs);
-
-    // Broadcast prompt created status
-    const statusMessage: PromptStatusChangedMessage = {
-      id: promptId,
-      prompt: message.prompt,
-      status: PromptStatus.PENDING,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    await councilKafka.publish(topics.council.statusChanged, statusMessage);
-
-    // Add to queue
-    promptQueue.push({
-      id: promptId,
-      prompt: message.prompt,
-      discussionTimeMs: message.discussionTimeMs,
-    });
-
-    councilEmitter.emit(String(CouncilEmits.NEW_PROMPT));
-  }
-
   const councilKafka = await getCouncilKafka();
+  const newPromptHandler = getHandler(
+    councilKafka,
+    councilEmitter,
+    promptQueue,
+    droppedPrompts,
+    logger,
+  );
   await councilKafka.subscribe(topics.council.queue, newPromptHandler);
 
   async function voteLoop() {
@@ -105,18 +58,7 @@ export async function createCouncilApp(): Promise<Express> {
     while (true) {
       try {
         // Memory optimization: Check memory before processing
-        const memCheck = checkMemoryThresholds();
-        if (!memCheck.withinLimits) {
-          logger.warn("Memory limits exceeded, pausing to allow GC", {
-            pauseDuration_ms: 30000,
-          });
-          await new Promise(resolve => setTimeout(resolve, 30000));
-
-          // Force GC if available
-          if (global.gc) {
-            logger.info("Running garbage collection");
-            global.gc();
-          }
+        if ((await checkMemory(logger)) === MEMORY_LIMITS.OUT_OF_BOUNDS) {
           continue;
         }
 
@@ -133,11 +75,12 @@ export async function createCouncilApp(): Promise<Express> {
         });
 
         // Feature 3: Check for cached response first (deduplication)
-        const cachedResponse = await storage.findCachedResponse(queuedPrompt.prompt);
+        const cachedResponse = await storage.findCachedResponse(
+          queuedPrompt.prompt,
+        );
 
         let answer: string;
         let processingTimeMs: number;
-        let finalStatus: PromptStatus;
 
         if (cachedResponse) {
           logger.info("Found cached response for prompt", {
@@ -145,14 +88,13 @@ export async function createCouncilApp(): Promise<Express> {
           });
           answer = cachedResponse.answer;
           processingTimeMs = 0; // No processing needed
-          finalStatus = PromptStatus.CACHED;
 
           // Update the current prompt to CACHED status
           await storage.updatePromptStatus(
             queuedPrompt.id,
             PromptStatus.CACHED,
             answer,
-            processingTimeMs
+            processingTimeMs,
           );
 
           // Broadcast cached status
@@ -165,11 +107,16 @@ export async function createCouncilApp(): Promise<Express> {
             createdAt: new Date(),
             updatedAt: new Date(),
           };
-          await councilKafka.publish(topics.council.statusChanged, cachedMessage);
-
+          await councilKafka.publish(
+            topics.council.statusChanged,
+            cachedMessage,
+          );
         } else {
           // Update status to PROCESSING
-          await storage.updatePromptStatus(queuedPrompt.id, PromptStatus.PROCESSING);
+          await storage.updatePromptStatus(
+            queuedPrompt.id,
+            PromptStatus.PROCESSING,
+          );
 
           // Broadcast processing status
           const processingMessage: PromptStatusChangedMessage = {
@@ -179,14 +126,20 @@ export async function createCouncilApp(): Promise<Express> {
             createdAt: new Date(),
             updatedAt: new Date(),
           };
-          await councilKafka.publish(topics.council.statusChanged, processingMessage);
+          await councilKafka.publish(
+            topics.council.statusChanged,
+            processingMessage,
+          );
 
           // Log memory before voting
           const memBefore = getMemoryStats();
           const startTime = Date.now();
 
           // Feature 1: Pass discussionTimeMs to vote
-          answer = await council.vote(queuedPrompt.prompt, queuedPrompt.discussionTimeMs);
+          answer = await council.vote(
+            queuedPrompt.prompt,
+            queuedPrompt.discussionTimeMs,
+          );
           logger.info("Council has decided", { answer });
           processingTimeMs = Date.now() - startTime;
 
@@ -198,14 +151,12 @@ export async function createCouncilApp(): Promise<Express> {
             heapDelta_mb: parseFloat(heapDelta.toFixed(2)),
           });
 
-          finalStatus = PromptStatus.COMPLETED;
-
           // Update status to COMPLETED
           await storage.updatePromptStatus(
             queuedPrompt.id,
             PromptStatus.COMPLETED,
             answer,
-            processingTimeMs
+            processingTimeMs,
           );
 
           // Broadcast completed status
@@ -218,7 +169,10 @@ export async function createCouncilApp(): Promise<Express> {
             createdAt: new Date(),
             updatedAt: new Date(),
           };
-          await councilKafka.publish(topics.council.statusChanged, completedMessage);
+          await councilKafka.publish(
+            topics.council.statusChanged,
+            completedMessage,
+          );
         }
 
         // Publish saved message (backward compatibility)
@@ -234,7 +188,6 @@ export async function createCouncilApp(): Promise<Express> {
 
         // Reset error count on successful processing
         errorCount = 0;
-
       } catch (error) {
         errorCount++;
         logger.error("Error in vote loop", error as Error, {
@@ -246,7 +199,7 @@ export async function createCouncilApp(): Promise<Express> {
           logger.error("Max errors reached, pausing", {
             pauseDuration_ms: 60000,
           });
-          await new Promise(resolve => setTimeout(resolve, 60000));
+          await new Promise((resolve) => setTimeout(resolve, 60000));
           errorCount = 0; // Reset after pause
         } else {
           // Exponential backoff
@@ -254,7 +207,7 @@ export async function createCouncilApp(): Promise<Express> {
           logger.warn("Backing off before retry", {
             backoff_ms: backoffMs,
           });
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          await new Promise((resolve) => setTimeout(resolve, backoffMs));
         }
       }
     }

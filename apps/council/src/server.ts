@@ -2,7 +2,7 @@ import { createExpressHttpsServer } from "@otm/service";
 import { fetchEnvVar } from "@otm/utils";
 import { createCouncilApp } from "./app";
 import { Server } from "http";
-import * as consts from "./consts";
+import * as consts from "./council/consts";
 import { createLogger } from "@otm/logger";
 
 const HTTPS_PORT = parseInt(fetchEnvVar("OTM_HOME_COUNCIL_PORT"));

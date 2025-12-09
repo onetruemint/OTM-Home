@@ -1,5 +1,3 @@
-import { KafkaBroker } from "@otm/kafka";
-import { Logger } from "@otm/logger";
 import { OllamaClient } from "@otm/ollama";
 
 export interface CouncilMember {
@@ -11,6 +9,12 @@ export interface CouncilMember {
 export interface MemberJson {
   members: CouncilMember[];
   elites: CouncilMember[];
+}
+
+export interface QueuedPrompt {
+  id: string;
+  prompt: string;
+  discussionTimeMs?: number;
 }
 
 export interface CouncilDiscussion {
